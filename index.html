@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>He Laughed</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Montserrat:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+  html, body {
+    width:100%; height:100%;
+    overflow:hidden;
+    background:#0D0D0D;
+  }
+
+  #stage {
+    position:fixed; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    background:#0D0D0D;
+  }
+
+  /* All stanzas sit in same spot, opacity controlled by JS */
+  #poem-container {
+    position:relative;
+    width:100%; max-width:640px;
+    padding:0 44px;
+    text-align:center;
+  }
+
+  .stanza {
+    position:absolute;
+    top:50%; left:0;
+    transform:translateY(-50%);
+    width:100%;
+    padding:0 44px;
+    /* opacity set entirely by JS — never set here */
+    pointer-events:none;
+  }
+
+  .stanza p {
+    font-family:'Playfair Display', Georgia, serif;
+    font-size:clamp(1.1rem, 2.9vw, 1.72rem);
+    font-weight:400;
+    color:#F5F3F0;
+    line-height:1.95;
+    letter-spacing:0.015em;
+    text-shadow:0 1px 6px rgba(0,0,0,0.55);
+  }
+  .stanza.large p {
+    font-size:clamp(1.35rem, 3.7vw, 2.15rem);
+    line-height:1.75;
+  }
+  .stanza p b {
+    font-weight:700;
+    color:#FFFFFF;
+  }
+  .gap { display:block; height:0.55em; }
+
+  /* ── Title ── */
+  #title-screen {
+    position:absolute; inset:0; z-index:30;
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    background:#0D0D0D;
+    /* opacity driven by JS */
+  }
+  #title-screen h1 {
+    font-family:'Playfair Display', serif;
+    font-size:clamp(2rem, 6vw, 3.6rem);
+    font-weight:400; font-style:italic;
+    color:#F5F3F0; letter-spacing:0.05em;
+    opacity:0; /* JS fades this in */
+    transition:opacity 2.5s ease;
+  }
+  #title-screen .sub {
+    font-family:'Montserrat', sans-serif;
+    font-weight:300;
+    font-size:clamp(0.55rem, 1.2vw, 0.74rem);
+    color:rgba(245,243,240,0.22);
+    letter-spacing:0.44em; text-transform:uppercase;
+    margin-top:1.5rem;
+    opacity:0;
+    transition:opacity 2.5s ease 0.6s;
+  }
+
+  /* ── Tap prompt ── */
+  #start-prompt {
+    position:absolute; bottom:9%; left:50%;
+    transform:translateX(-50%);
+    z-index:31;
+    opacity:0;
+    transition:opacity 1s ease;
+    animation:blink 2.2s 1.5s ease-in-out infinite;
+  }
+  #start-prompt p {
+    font-family:'Montserrat', sans-serif; font-weight:300;
+    font-size:clamp(0.52rem, 1.1vw, 0.7rem);
+    color:rgba(245,243,240,0.28); letter-spacing:0.4em; text-transform:uppercase;
+  }
+  @keyframes blink { 0%,100%{opacity:0.3} 50%{opacity:1} }
+
+  /* ── End screen ── */
+  #end-screen {
+    position:absolute; inset:0; z-index:20;
+    display:flex; align-items:center; justify-content:center;
+    background:#0D0D0D;
+    opacity:0; /* JS controls */
+    transition:opacity 3s ease;
+    pointer-events:none;
+  }
+  #end-screen p {
+    font-family:'Montserrat', sans-serif; font-weight:300;
+    font-size:clamp(0.5rem, 1.1vw, 0.7rem);
+    color:rgba(245,243,240,0.15);
+    letter-spacing:0.48em; text-transform:uppercase;
+  }
+
+  /* ── Progress ── */
+  #progress {
+    position:fixed; bottom:0; left:0;
+    height:1px; background:rgba(245,243,240,0.09);
+    width:0; transition:width 0.6s linear;
+    z-index:100;
+  }
+
+  /* ── Voice button ── */
+  #voice-btn {
+    position:fixed; top:22px; right:22px; z-index:200;
+    background:none;
+    border:1px solid rgba(245,243,240,0.13);
+    border-radius:50%; width:38px; height:38px;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; opacity:0.45;
+    transition:opacity 0.3s, border-color 0.3s;
+  }
+  #voice-btn:hover { opacity:0.9; border-color:rgba(245,243,240,0.35); }
+  #voice-btn svg { width:15px; height:15px; fill:rgba(245,243,240,0.75); }
+</style>
+</head>
+<body>
+
+<div id="stage">
+  <div id="title-screen">
+    <h1 id="title-h1">He Laughed</h1>
+    <p class="sub" id="title-sub">a poem</p>
+  </div>
+  <div id="start-prompt"><p>tap anywhere to begin</p></div>
+  <div id="end-screen"><p>silently.</p></div>
+  <div id="poem-container"></div>
+  <div id="progress"></div>
+</div>
+
+<button id="voice-btn" aria-label="Toggle voice">
+  <svg id="vicon" viewBox="0 0 24 24">
+    <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM3 9v6h4l5 5V4L7 9H3z"/>
+  </svg>
+</button>
+
+<script>
+/* ═══════════════════════════════════════════
+   POEM DATA
+═══════════════════════════════════════════ */
+const stanzas = [
+  { large:true,  hold:4200, voice:`He laughed. Because laughter was easier.`,
+    html:`He <b>laughed</b><br>because <b>laughter</b> was easier.` },
+
+  { hold:5800, voice:`It was easier than explaining why his eyes looked tired, why his chest felt heavy, why the nights felt longer than they should.`,
+    html:`It was easier than explaining<br>why his eyes looked tired,<br>why his chest felt heavy,<br>why the nights felt longer<br>than they should.` },
+
+  { large:true, hold:3600, voice:`So he laughed.`,
+    html:`So he <b>laughed</b>.` },
+
+  { hold:5800, voice:`He laughed when the weight became too much. He laughed when his heart felt empty. He laughed when the sadness inside him grew too large for words.`,
+    html:`He <b>laughed</b> when the weight became too much.<br>He <b>laughed</b> when his heart felt empty.<br>He <b>laughed</b> when the sadness inside him<br>grew too large for words.` },
+
+  { hold:3800, voice:`And people believed the laughter.`,
+    html:`And people believed the laughter.` },
+
+  { hold:4600, voice:`They heard joy in it. They heard light. They heard someone who was fine.`,
+    html:`They heard joy in it.<br>They heard light.<br>They heard someone who was fine.` },
+
+  { large:true, hold:4200, voice:`No one heard the pain beneath it.`,
+    html:`No one heard the <b>pain</b> beneath it.` },
+
+  { hold:6200, voice:`No one noticed that every laugh was forced, that every smile hid another wound, that behind the warmth he gave was a person growing colder inside.`,
+    html:`No one noticed<br>that every laugh was forced,<br>that every smile hid another wound,<br>that behind the warmth he gave<br>was a person growing colder inside.` },
+
+  { hold:3800, voice:`They said pressure would make him stronger.`,
+    html:`They said pressure would make him stronger.` },
+
+  { hold:3800, voice:`But pressure was not making him stronger.`,
+    html:`But pressure was not making him stronger.` },
+
+  { large:true, hold:3900, voice:`It was hollowing him out.`,
+    html:`It was <b>hollowing</b> him out.` },
+
+  { hold:5200, voice:`Little by little, it took his sleep, his peace, his hope.`,
+    html:`Little by little,<br>it took his sleep,<br>his peace,<br>his hope.` },
+
+  { hold:5800, voice:`Until all that was left was the sound of laughter echoing from someone who no longer felt alive.`,
+    html:`Until all that was left<br>was the sound of <b>laughter</b><br>echoing from someone<br>who no longer felt alive.` },
+
+  { large:true, hold:4000, voice:`Still. He laughed.`,
+    html:`Still, he <b>laughed</b>.` },
+
+  { hold:3800, voice:`Because laughter made people comfortable.`,
+    html:`Because <b>laughter</b> made people comfortable.` },
+
+  { large:true, hold:3600, voice:`Pain did not.`,
+    html:`<b>Pain</b> did not.` },
+
+  { hold:3800, voice:`Pain made people look away.`,
+    html:`<b>Pain</b> made people look away.` },
+
+  { hold:5000, voice:`So he gave them laughter. He gave them smiles. He gave them jokes.`,
+    html:`So he gave them <b>laughter</b>.<span class="gap"></span>He gave them smiles.<br>He gave them jokes.` },
+
+  { hold:4200, voice:`And in return, they gave him silence.`,
+    html:`And in return,<br>they gave him <b>silence</b>.` },
+
+  { hold:5400, voice:`No one asked why the happiest person in the room looked so tired when no one was watching.`,
+    html:`No one asked why the happiest person in the room<br>looked so tired when no one was watching.` },
+
+  { hold:5200, voice:`No one saw that the louder he laughed, the closer he was to disappearing.`,
+    html:`No one saw<br>that the louder he <b>laughed</b>,<br>the closer he was to <b>disappearing</b>.` },
+
+  { large:true, hold:4400, voice:`And one day, the laughter stopped.`,
+    html:`And one day,<br>the <b>laughter</b> stopped.` },
+
+  { hold:4600, voice:`The room was quiet. The smiles were gone.`,
+    html:`The room was quiet.<span class="gap"></span>The smiles were gone.` },
+
+  { hold:6000, voice:`And all the people who once believed he was happy were left staring at the silence he had been carrying alone.`,
+    html:`And all the people who once believed he was happy<br>were left staring at the <b>silence</b><br>he had been carrying <b>alone</b>.` },
+
+  { hold:4800, voice:`They said they never knew. They said there were no signs.`,
+    html:`They said they never knew.<span class="gap"></span>They said there were no signs.` },
+
+  { large:true, hold:3900, voice:`But there were signs.`,
+    html:`But there were signs.` },
+
+  { hold:3800, voice:`His laughter was the sign.`,
+    html:`His <b>laughter</b> was the sign.` },
+
+  { hold:6200, voice:`Every joke was a wound. Every smile was a goodbye spoken in a language no one cared enough to understand.`,
+    html:`Every joke was a wound.<span class="gap"></span>Every smile was a goodbye<br>spoken in a language<br>no one cared enough to understand.` },
+
+  { hold:4600, voice:`And in the end, he became exactly what he feared.`,
+    html:`And in the end,<br>he became exactly what he feared:` },
+
+  { large:true, hold:5800, voice:`A tragedy. People only understood when it was too late.`,
+    html:`a <b>tragedy</b><br>people only understood<br>when it was <b>too late</b>.` },
+
+  { hold:6800, voice:`Now all that remains is the memory of someone who made everyone laugh while quietly begging for someone to notice he was fading.`,
+    html:`Now all that remains<br>is the memory of someone<br>who made everyone <b>laugh</b><br>while quietly begging for someone<br>to notice he was fading.` },
+
+  { large:true, hold:4000, voice:`But no one did.`,
+    html:`But no one did.` },
+
+  { hold:4400, voice:`So he vanished the same way he suffered.`,
+    html:`So he <b>vanished</b><br>the same way he suffered:` },
+
+  { large:true, hold:5000, voice:`Silently.`,
+    html:`silently.` },
+
+  { hold:3800, voice:`And the cruelest part was this.`,
+    html:`And the cruelest part was this:` },
+
+  { hold:6000, voice:`The world did not break with him. Morning still came. People still laughed. Life still moved.`,
+    html:`The world did not break with him.<span class="gap"></span>Morning still came.<br>People still <b>laughed</b>.<br>Life still moved.` },
+
+  { hold:5200, voice:`As if the boy who carried so much pain had never been there at all.`,
+    html:`As if the boy who carried so much <b>pain</b><br>had never been there at all.` },
+
+  { hold:5400, voice:`And somewhere in the silence he left behind lived the truth no one saw.`,
+    html:`And somewhere in the <b>silence</b> he left behind<br>lived the truth no one saw:` },
+
+  { hold:4200, voice:`He was never asking to be saved.`,
+    html:`He was never asking to be saved.` },
+
+  { hold:5200, voice:`He was only hoping someone would notice that behind all the laughter,`,
+    html:`He was only hoping<br>someone would notice<br>that behind all the <b>laughter</b>,` },
+
+  { large:true, hold:6500, linger:true, voice:`He was already gone.`,
+    html:`he was <b>already gone</b>.` },
+];
+
+/* ═══════════════════════════════════════════
+   DOM
+═══════════════════════════════════════════ */
+const poemContainer = document.getElementById('poem-container');
+const titleScreen   = document.getElementById('title-screen');
+const titleH1       = document.getElementById('title-h1');
+const titleSub      = document.getElementById('title-sub');
+const startPrompt   = document.getElementById('start-prompt');
+const endScreen     = document.getElementById('end-screen');
+const progressBar   = document.getElementById('progress');
+const voiceBtn      = document.getElementById('voice-btn');
+const vicon         = document.getElementById('vicon');
+
+/* Build stanza elements — all invisible, stacked */
+const els = stanzas.map((s, i) => {
+  const div = document.createElement('div');
+  div.className = 'stanza' + (s.large ? ' large' : '');
+  div.id = `s${i}`;
+  div.style.opacity = '0';          // start fully hidden
+  const p = document.createElement('p');
+  p.innerHTML = s.html;
+  div.appendChild(p);
+  poemContainer.appendChild(div);
+  return div;
+});
+
+/* ═══════════════════════════════════════════
+   FADE HELPER
+   Pure JS linear fade — no CSS animation classes.
+   Calls back when done.
+═══════════════════════════════════════════ */
+const activeTimers = new Map(); // el → animFrame id
+
+function fadeTo(el, targetOpacity, durationMs, onDone) {
+  // Cancel any running fade on this element
+  if (activeTimers.has(el)) {
+    cancelAnimationFrame(activeTimers.get(el));
+    activeTimers.delete(el);
+  }
+
+  const startOpacity = parseFloat(el.style.opacity) || 0;
+  const diff         = targetOpacity - startOpacity;
+  let   startTime    = null;
+
+  function step(ts) {
+    if (!startTime) startTime = ts;
+    const elapsed  = ts - startTime;
+    const progress = Math.min(elapsed / durationMs, 1);
+    // ease-in-out cubic
+    const ease     = progress < 0.5
+      ? 4 * progress * progress * progress
+      : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+
+    el.style.opacity = String(startOpacity + diff * ease);
+
+    if (progress < 1) {
+      activeTimers.set(el, requestAnimationFrame(step));
+    } else {
+      activeTimers.delete(el);
+      if (onDone) onDone();
+    }
+  }
+
+  activeTimers.set(el, requestAnimationFrame(step));
+}
+
+/* ═══════════════════════════════════════════
+   VOICE / TTS
+═══════════════════════════════════════════ */
+const synth    = window.speechSynthesis;
+const speechOK = !!synth;
+let voiceOn    = false;
+let pickedVoice = null;
+
+const ICON_ON  = `<path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>`;
+const ICON_OFF = `<path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>`;
+
+function pickVoice() {
+  const voices = synth.getVoices();
+  const prefs  = ['Google UK English Male','Microsoft George','Daniel','Arthur','Alex'];
+  for (const pref of prefs) {
+    const v = voices.find(v => v.name.includes(pref));
+    if (v) { pickedVoice = v; return; }
+  }
+  pickedVoice = voices.find(v => v.lang.startsWith('en-GB'))
+             || voices.find(v => v.lang.startsWith('en'))
+             || voices[0] || null;
+}
+if (speechOK) { pickVoice(); synth.onvoiceschanged = pickVoice; }
+
+function setVoiceIcon() {
+  vicon.innerHTML      = voiceOn ? ICON_ON : ICON_OFF;
+  voiceBtn.style.opacity = voiceOn ? '0.85' : '0.45';
+}
+setVoiceIcon();
+
+voiceBtn.addEventListener('click', e => {
+  e.stopPropagation();
+  if (!speechOK) return;
+  voiceOn = !voiceOn;
+  setVoiceIcon();
+  if (!voiceOn) synth.cancel();
+});
+
+function speak(text) {
+  if (!voiceOn || !speechOK) return;
+  synth.cancel();
+  const u    = new SpeechSynthesisUtterance(text);
+  u.rate     = 0.70;
+  u.pitch    = 0.85;
+  u.volume   = 0.92;
+  if (pickedVoice) u.voice = pickedVoice;
+  synth.speak(u);
+}
+
+/* ═══════════════════════════════════════════
+   SEQUENCER
+   Strictly sequential: fade-in → hold → fade-out → gap → next
+   Each stage waits for the previous to fully complete via callbacks.
+═══════════════════════════════════════════ */
+const FADE_IN_MS  = 2200;
+const FADE_OUT_MS = 2000;
+const GAP_MS      = 500;   // dark silence between stanzas
+
+let sequenceIndex = -1;
+
+function runStanza(index) {
+  if (index >= stanzas.length) {
+    // Done — fade in end screen
+    endScreen.style.opacity = '1';
+    return;
+  }
+
+  sequenceIndex = index;
+  const s  = stanzas[index];
+  const el = els[index];
+
+  // 1. Fade IN
+  fadeTo(el, 1, FADE_IN_MS, () => {
+    // 2. Speak once fully faded in
+    speak(s.voice);
+
+    // 3. Hold
+    const holdMs = s.hold + (s.linger ? 3500 : 0);
+    setTimeout(() => {
+
+      // 4. Fade OUT
+      fadeTo(el, 0, FADE_OUT_MS, () => {
+
+        // 5. Silent gap, then next
+        setTimeout(() => runStanza(index + 1), GAP_MS);
+
+      });
+    }, holdMs);
+  });
+
+  // Update progress
+  progressBar.style.width = ((index + 1) / stanzas.length * 100) + '%';
+}
+
+/* ═══════════════════════════════════════════
+   TITLE SEQUENCE then START
+═══════════════════════════════════════════ */
+let started = false;
+
+function begin() {
+  if (started) return;
+  started = true;
+  startPrompt.style.display = 'none';
+
+  // Fade out title screen
+  fadeTo(titleScreen, 0, 2800, () => {
+    titleScreen.style.display = 'none';
+    runStanza(0);
+  });
+}
+
+// Show title elements
+setTimeout(() => {
+  titleH1.style.opacity  = '1';
+  titleSub.style.opacity = '1';
+  startPrompt.style.opacity = '1';
+}, 200);
+
+document.addEventListener('click',      begin, { once: true });
+document.addEventListener('touchstart', begin, { once: true, passive: true });
+// Auto-start after 7s if no interaction
+setTimeout(() => { if (!started) begin(); }, 7000);
+</script>
+</body>
+</html>
