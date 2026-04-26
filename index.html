@@ -2,478 +2,721 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>He Laughed</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Montserrat:wght@300;400&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>CIT 2101 — Statistics</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080a10;--surface:#0f111a;--card:#141720;--border:#1e2235;
+  --gold:#f0a840;--gold-dim:rgba(240,168,64,0.12);
+  --blue:#5b9cf6;--blue-dim:rgba(91,156,246,0.12);
+  --green:#5de8a8;--green-dim:rgba(93,232,168,0.12);
+  --red:#f06b6b;--red-dim:rgba(240,107,107,0.12);
+  --text:#dde1f0;--muted:#606480;
+  --fs:'DM Sans',sans-serif;--fm:'DM Mono',monospace;--fd:'Syne',sans-serif;
+  --radius:14px;--nav-h:60px;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--fs);font-size:15px;line-height:1.65;min-height:100dvh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse 60% 40% at 15% 10%,rgba(240,168,64,0.055) 0%,transparent 60%),radial-gradient(ellipse 50% 30% at 85% 85%,rgba(91,156,246,0.045) 0%,transparent 60%);pointer-events:none}
 
-  html, body {
-    width:100%; height:100%;
-    overflow:hidden;
-    background:#0D0D0D;
-  }
+/* HEADER */
+header{position:sticky;top:0;z-index:200;height:var(--nav-h);display:flex;align-items:center;gap:14px;padding:0 clamp(14px,4vw,40px);background:rgba(8,10,16,0.9);backdrop-filter:blur(20px) saturate(1.4);border-bottom:1px solid var(--border)}
+.logo-badge{font-family:var(--fm);font-size:10px;letter-spacing:2px;font-weight:500;background:var(--gold);color:#000;padding:3px 10px;border-radius:4px;flex-shrink:0;white-space:nowrap}
+.logo-title{font-family:var(--fd);font-size:clamp(13px,2.5vw,18px);font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0}
 
-  #stage {
-    position:fixed; inset:0;
-    display:flex; align-items:center; justify-content:center;
-    background:#0D0D0D;
-  }
+/* BOTTOM NAV — mobile default */
+.tab-bar{position:fixed;bottom:0;left:0;right:0;z-index:200;display:flex;background:rgba(8,10,16,0.96);backdrop-filter:blur(20px);border-top:1px solid var(--border);padding-bottom:env(safe-area-inset-bottom,0px)}
+.tab-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:9px 2px 7px;border:none;background:transparent;color:var(--muted);cursor:pointer;font-family:var(--fm);font-size:8.5px;letter-spacing:.8px;transition:color .2s;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.tab-btn .icon{font-size:18px;line-height:1;transition:transform .2s}
+.tab-btn.active{color:var(--gold)}
+.tab-btn.active .icon{transform:scale(1.18)}
 
-  /* All stanzas sit in same spot, opacity controlled by JS */
-  #poem-container {
-    position:relative;
-    width:100%; max-width:640px;
-    padding:0 44px;
-    text-align:center;
-  }
+/* DESKTOP NAV — inline in header */
+@media(min-width:768px){
+  .tab-bar{position:static;background:transparent;border:none;padding:0;margin-left:auto;width:auto;flex-shrink:0;gap:3px}
+  .tab-btn{flex:none;flex-direction:row;gap:6px;padding:7px 15px;border-radius:8px;font-size:10px;border:1px solid transparent;white-space:nowrap}
+  .tab-btn .icon{font-size:13px}
+  .tab-btn:hover{background:var(--card);color:var(--text);border-color:var(--border)}
+  .tab-btn.active{background:var(--gold-dim);color:var(--gold);border-color:rgba(240,168,64,.3)}
+  .tab-btn.active .icon{transform:none}
+  .tab-bar-mobile{display:none}
+}
 
-  .stanza {
-    position:absolute;
-    top:50%; left:0;
-    transform:translateY(-50%);
-    width:100%;
-    padding:0 44px;
-    /* opacity set entirely by JS — never set here */
-    pointer-events:none;
-  }
+/* MAIN */
+main{position:relative;z-index:1;max-width:980px;margin:0 auto;padding:clamp(20px,4vw,44px) clamp(14px,3vw,26px);padding-bottom:calc(78px + env(safe-area-inset-bottom,0px))}
+@media(min-width:768px){main{padding-bottom:60px}}
 
-  .stanza p {
-    font-family:'Playfair Display', Georgia, serif;
-    font-size:clamp(1.1rem, 2.9vw, 1.72rem);
-    font-weight:400;
-    color:#F5F3F0;
-    line-height:1.95;
-    letter-spacing:0.015em;
-    text-shadow:0 1px 6px rgba(0,0,0,0.55);
-  }
-  .stanza.large p {
-    font-size:clamp(1.35rem, 3.7vw, 2.15rem);
-    line-height:1.75;
-  }
-  .stanza p b {
-    font-weight:700;
-    color:#FFFFFF;
-  }
-  .gap { display:block; height:0.55em; }
+/* SECTIONS */
+.section{display:none}
+.section.active{display:block;animation:rise .35s cubic-bezier(.22,.68,0,1.2)}
+@keyframes rise{from{opacity:0;transform:translateY(14px) scale(.99)}to{opacity:1;transform:translateY(0) scale(1)}}
 
-  /* ── Title ── */
-  #title-screen {
-    position:absolute; inset:0; z-index:30;
-    display:flex; flex-direction:column;
-    align-items:center; justify-content:center;
-    background:#0D0D0D;
-    /* opacity driven by JS */
-  }
-  #title-screen h1 {
-    font-family:'Playfair Display', serif;
-    font-size:clamp(2rem, 6vw, 3.6rem);
-    font-weight:400; font-style:italic;
-    color:#F5F3F0; letter-spacing:0.05em;
-    opacity:0; /* JS fades this in */
-    transition:opacity 2.5s ease;
-  }
-  #title-screen .sub {
-    font-family:'Montserrat', sans-serif;
-    font-weight:300;
-    font-size:clamp(0.55rem, 1.2vw, 0.74rem);
-    color:rgba(245,243,240,0.22);
-    letter-spacing:0.44em; text-transform:uppercase;
-    margin-top:1.5rem;
-    opacity:0;
-    transition:opacity 2.5s ease 0.6s;
-  }
+/* HERO */
+.hero{margin-bottom:clamp(22px,4vw,40px)}
+.hero-eyebrow{font-family:var(--fm);font-size:10px;letter-spacing:2.5px;color:var(--muted);margin-bottom:5px}
+.hero-title{font-family:var(--fd);font-weight:800;font-size:clamp(30px,7vw,52px);line-height:1.05;background:linear-gradient(130deg,var(--text) 30%,var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-sub{font-size:12.5px;color:var(--muted);font-family:var(--fm);letter-spacing:.5px;margin-top:5px}
 
-  /* ── Tap prompt ── */
-  #start-prompt {
-    position:absolute; bottom:9%; left:50%;
-    transform:translateX(-50%);
-    z-index:31;
-    opacity:0;
-    transition:opacity 1s ease;
-    animation:blink 2.2s 1.5s ease-in-out infinite;
-  }
-  #start-prompt p {
-    font-family:'Montserrat', sans-serif; font-weight:300;
-    font-size:clamp(0.52rem, 1.1vw, 0.7rem);
-    color:rgba(245,243,240,0.28); letter-spacing:0.4em; text-transform:uppercase;
-  }
-  @keyframes blink { 0%,100%{opacity:0.3} 50%{opacity:1} }
+/* GRID 2 */
+.grid-2{display:grid;gap:13px;grid-template-columns:1fr;margin-bottom:18px}
+@media(min-width:520px){.grid-2{grid-template-columns:1fr 1fr}}
 
-  /* ── End screen ── */
-  #end-screen {
-    position:absolute; inset:0; z-index:20;
-    display:flex; align-items:center; justify-content:center;
-    background:#0D0D0D;
-    opacity:0; /* JS controls */
-    transition:opacity 3s ease;
-    pointer-events:none;
-  }
-  #end-screen p {
-    font-family:'Montserrat', sans-serif; font-weight:300;
-    font-size:clamp(0.5rem, 1.1vw, 0.7rem);
-    color:rgba(245,243,240,0.15);
-    letter-spacing:0.48em; text-transform:uppercase;
-  }
+/* CONCEPT CARD */
+.concept-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:clamp(14px,3vw,20px);position:relative;overflow:hidden;transition:transform .2s,border-color .2s}
+.concept-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:var(--radius) var(--radius) 0 0}
+.concept-card:hover{transform:translateY(-2px)}
+.concept-card.gold{border-color:rgba(240,168,64,.22)}.concept-card.gold::before{background:var(--gold)}
+.concept-card.blue{border-color:rgba(91,156,246,.22)}.concept-card.blue::before{background:var(--blue)}
+.concept-card.green{border-color:rgba(93,232,168,.22)}.concept-card.green::before{background:var(--green)}
+.concept-card.red{border-color:rgba(240,107,107,.22)}.concept-card.red::before{background:var(--red)}
+.chip{font-family:var(--fm);font-size:9px;letter-spacing:2px;font-weight:500;padding:2px 8px;border-radius:20px;display:inline-block;margin-bottom:9px}
+.concept-card.gold .chip{background:var(--gold-dim);color:var(--gold)}
+.concept-card.blue .chip{background:var(--blue-dim);color:var(--blue)}
+.concept-card.green .chip{background:var(--green-dim);color:var(--green)}
+.concept-card.red .chip{background:var(--red-dim);color:var(--red)}
+.concept-card h4{font-family:var(--fd);font-size:15px;font-weight:700;margin-bottom:6px}
+.concept-card p{font-size:13px;color:#9ca0b8;line-height:1.7}
 
-  /* ── Progress ── */
-  #progress {
-    position:fixed; bottom:0; left:0;
-    height:1px; background:rgba(245,243,240,0.09);
-    width:0; transition:width 0.6s linear;
-    z-index:100;
-  }
+/* CARD */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:clamp(16px,3vw,26px);margin-bottom:15px}
+.card h3{font-family:var(--fd);font-size:clamp(15px,3vw,19px);font-weight:800;color:var(--gold);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.card>p,.card>div>p{font-size:14px;color:#b0b5cc;line-height:1.75}
 
-  /* ── Voice button ── */
-  #voice-btn {
-    position:fixed; top:22px; right:22px; z-index:200;
-    background:none;
-    border:1px solid rgba(245,243,240,0.13);
-    border-radius:50%; width:38px; height:38px;
-    display:flex; align-items:center; justify-content:center;
-    cursor:pointer; opacity:0.45;
-    transition:opacity 0.3s, border-color 0.3s;
-  }
-  #voice-btn:hover { opacity:0.9; border-color:rgba(245,243,240,0.35); }
-  #voice-btn svg { width:15px; height:15px; fill:rgba(245,243,240,0.75); }
+/* FORMULA */
+.formula{background:rgba(240,168,64,.06);border:1px solid rgba(240,168,64,.18);border-left:3px solid var(--gold);border-radius:0 10px 10px 0;padding:12px 16px;margin:13px 0;font-family:var(--fm);font-size:clamp(12px,2.5vw,14px);color:var(--gold);overflow-x:auto;white-space:nowrap}
+
+/* STEPS */
+.steps{display:flex;flex-direction:column;gap:9px}
+.step{display:flex;gap:13px;align-items:flex-start;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 15px;transition:border-color .2s}
+.step:hover{border-color:rgba(240,168,64,.2)}
+.step-num{min-width:25px;height:25px;background:var(--gold);color:#000;font-family:var(--fm);font-size:10px;font-weight:600;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
+.step p{font-size:13.5px;color:#b4b9d0}
+
+/* TABLE */
+.table-wrap{overflow-x:auto;border-radius:10px;margin-top:13px;-webkit-overflow-scrolling:touch}
+.mini-table{width:100%;border-collapse:collapse;font-family:var(--fm);font-size:clamp(11px,1.8vw,12.5px);min-width:300px}
+.mini-table th{background:var(--surface);color:var(--muted);padding:9px 13px;text-align:left;border-bottom:1px solid var(--border);font-size:10px;letter-spacing:1.5px;font-weight:600;white-space:nowrap}
+.mini-table td{padding:9px 13px;border-bottom:1px solid rgba(30,34,53,.8);color:#a8adc6;vertical-align:top}
+.mini-table tr:last-child td{border-bottom:none}
+.mini-table td.emph{color:var(--gold);font-weight:600}
+
+/* PILLS */
+.pill{display:inline-flex;align-items:center;font-size:11px;font-family:var(--fm);font-weight:500;padding:2px 10px;border-radius:20px;margin:2px}
+.pill.gold{background:var(--gold-dim);color:var(--gold);border:1px solid rgba(240,168,64,.25)}
+.pill.blue{background:var(--blue-dim);color:var(--blue);border:1px solid rgba(91,156,246,.25)}
+.pill.green{background:var(--green-dim);color:var(--green);border:1px solid rgba(93,232,168,.25)}
+
+/* DIVIDER */
+.divider{height:1px;background:var(--border);margin:18px 0}
+
+/* ACCORDION */
+.accordion{margin-bottom:11px}
+.accordion summary{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:13px 17px;cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;font-family:var(--fd);font-size:clamp(13px,2.5vw,15px);font-weight:700;color:var(--text);transition:border-color .2s;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.accordion summary::-webkit-details-marker{display:none}
+.accordion summary::after{content:'▸';font-size:11px;color:var(--muted);transition:transform .2s;flex-shrink:0;margin-left:10px}
+.accordion[open] summary{border-radius:var(--radius) var(--radius) 0 0;border-color:rgba(240,168,64,.25);color:var(--gold)}
+.accordion[open] summary::after{transform:rotate(90deg);color:var(--gold)}
+.accordion-body{background:var(--card);border:1px solid rgba(240,168,64,.2);border-top:none;border-radius:0 0 var(--radius) var(--radius);padding:16px 18px}
+
+/* CALC BOX */
+.calc-box{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:clamp(16px,3vw,26px);margin-bottom:16px}
+.calc-box-header{display:flex;align-items:flex-start;gap:13px;margin-bottom:18px}
+.calc-box-icon{width:40px;height:40px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px}
+.calc-box-icon.gold{background:var(--gold-dim)}.calc-box-icon.blue{background:var(--blue-dim)}.calc-box-icon.green{background:var(--green-dim)}
+.calc-box-title{font-family:var(--fd);font-size:clamp(15px,3vw,18px);font-weight:800}
+.calc-box-sub{font-size:10.5px;color:var(--muted);font-family:var(--fm);letter-spacing:.8px;margin-top:2px}
+
+/* INPUT GRID */
+.input-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:11px;margin-bottom:14px}
+@media(min-width:480px){.input-grid{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:700px){.input-grid{grid-template-columns:repeat(auto-fill,minmax(135px,1fr))}}
+
+.input-group label{display:block;font-size:10px;font-family:var(--fm);letter-spacing:1.5px;font-weight:500;color:var(--muted);margin-bottom:5px}
+.input-group input,.input-group select{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:10px 11px;border-radius:9px;font-family:var(--fm);font-size:clamp(13px,2vw,14px);outline:none;transition:border-color .18s,box-shadow .18s;-webkit-appearance:none;appearance:none}
+.input-group input:focus,.input-group select:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(240,168,64,.1)}
+.input-group select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23606480' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 11px center;padding-right:30px;cursor:pointer}
+.input-group select option{background:var(--card)}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:none;cursor:pointer;padding:11px 20px;border-radius:9px;font-family:var(--fm);font-size:11.5px;font-weight:500;letter-spacing:.8px;transition:transform .15s,opacity .15s,box-shadow .15s;-webkit-tap-highlight-color:transparent;touch-action:manipulation;width:100%;margin-top:4px}
+@media(min-width:480px){.btn{width:auto}}
+.btn:active{transform:scale(.97)}
+.btn.gold{background:var(--gold);color:#000}.btn.blue{background:var(--blue);color:#000}.btn.green{background:var(--green);color:#000}
+.btn:hover{opacity:.85;box-shadow:0 4px 18px rgba(0,0,0,.3)}
+
+/* RESULT */
+.result-box{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;margin-top:14px;display:none}
+.result-box.visible{display:block;animation:rise .25s ease}
+.result-row{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:4px;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px}
+.result-row:last-child{border-bottom:none}
+.rkey{color:var(--muted);font-family:var(--fm);font-size:10.5px;flex-shrink:0;padding-right:8px;padding-top:2px}
+.rval{font-family:var(--fm);font-weight:600;color:var(--gold);word-break:break-all;text-align:right}
+.verdict{margin-top:13px;padding:12px 15px;border-radius:9px;font-size:13px;font-weight:500;letter-spacing:.2px;line-height:1.5}
+.verdict.reject{background:var(--red-dim);border:1px solid rgba(240,107,107,.25);color:var(--red)}
+.verdict.accept{background:var(--green-dim);border:1px solid rgba(93,232,168,.25);color:var(--green)}
+
+/* CURVE */
+.curve-wrap{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;margin-top:14px;display:none;overflow:hidden}
+.curve-wrap canvas{width:100%!important;height:auto!important;display:block}
+
+/* FORMULA GRID */
+.formula-grid{display:grid;gap:13px;grid-template-columns:1fr;margin-bottom:18px}
+@media(min-width:540px){.formula-grid{grid-template-columns:1fr 1fr}}
+@media(min-width:860px){.formula-grid{grid-template-columns:1fr 1fr 1fr}}
+.formula-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:17px 19px;transition:transform .2s,border-color .2s}
+.formula-card:hover{transform:translateY(-2px);border-color:rgba(240,168,64,.2)}
+.fc-label{font-family:var(--fm);font-size:9px;letter-spacing:2px;color:var(--muted);margin-bottom:7px}
+.fc-name{font-family:var(--fd);font-size:14px;font-weight:700;margin-bottom:11px}
+.fc-eq{background:rgba(240,168,64,.07);border:1px solid rgba(240,168,64,.15);border-radius:8px;padding:9px 13px;font-family:var(--fm);font-size:clamp(11.5px,2.2vw,13.5px);color:var(--gold);overflow-x:auto;white-space:nowrap;margin-bottom:9px}
+.fc-vars{font-size:11.5px;color:#7a7e96;line-height:1.85}
+
+/* QUIZ */
+.quiz-wrap{display:flex;flex-direction:column;gap:16px}
+.quiz-q-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:clamp(14px,3vw,22px);transition:border-color .2s}
+.quiz-q-num{font-family:var(--fm);font-size:9.5px;letter-spacing:2px;color:var(--muted);margin-bottom:7px}
+.quiz-q-text{font-size:14px;color:var(--text);line-height:1.7;margin-bottom:13px;font-weight:500}
+.quiz-opts{display:grid;gap:8px}
+@media(min-width:520px){.quiz-opts{grid-template-columns:1fr 1fr}}
+.quiz-opt{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:11px 13px;font-size:13px;cursor:pointer;text-align:left;color:var(--text);font-family:var(--fs);transition:all .18s;line-height:1.5;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.quiz-opt:hover:not(:disabled){border-color:var(--gold);color:var(--gold);background:var(--gold-dim)}
+.quiz-opt.correct{background:var(--green-dim);border-color:var(--green);color:var(--green)}
+.quiz-opt.wrong{background:var(--red-dim);border-color:var(--red);color:var(--red)}
+.quiz-opt:disabled{cursor:default}
+.quiz-feedback{margin-top:11px;font-size:12.5px;font-family:var(--fm);padding:10px 13px;border-radius:8px;display:none;line-height:1.6}
+.quiz-feedback.show{display:block;animation:rise .2s ease}
+.quiz-feedback.ok{background:var(--green-dim);color:var(--green)}
+.quiz-feedback.bad{background:var(--red-dim);color:var(--red)}
+.quiz-score{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px 24px;text-align:center;display:none;margin-bottom:18px}
+.quiz-score.show{display:block;animation:rise .3s ease}
+.quiz-score-num{font-family:var(--fd);font-size:48px;font-weight:800;color:var(--gold)}
+.quiz-score-label{font-family:var(--fm);font-size:10px;letter-spacing:2px;color:var(--muted);margin-top:4px}
+
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--surface)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
 </style>
 </head>
 <body>
 
-<div id="stage">
-  <div id="title-screen">
-    <h1 id="title-h1">He Laughed</h1>
-    <p class="sub" id="title-sub">a poem</p>
+<header>
+  <div class="logo-badge">CIT 2101</div>
+  <div class="logo-title">Statistics — Interactive Guide</div>
+  <nav class="tab-bar" id="desktopNav">
+    <button class="tab-btn active" onclick="showTab('normal',0)"><span class="icon">📈</span>Normal Curve</button>
+    <button class="tab-btn" onclick="showTab('hypothesis',1)"><span class="icon">🔬</span>Hypothesis</button>
+    <button class="tab-btn" onclick="showTab('formulas',2)"><span class="icon">📐</span>Formulas</button>
+    <button class="tab-btn" onclick="showTab('calculator',3)"><span class="icon">🧮</span>Calculator</button>
+    <button class="tab-btn" onclick="showTab('quiz',4)"><span class="icon">✏️</span>Quiz</button>
+  </nav>
+</header>
+
+<nav class="tab-bar tab-bar-mobile" id="mobileNav">
+  <button class="tab-btn active" onclick="showTab('normal',0)"><span class="icon">📈</span>Curve</button>
+  <button class="tab-btn" onclick="showTab('hypothesis',1)"><span class="icon">🔬</span>Hypo</button>
+  <button class="tab-btn" onclick="showTab('formulas',2)"><span class="icon">📐</span>Formulas</button>
+  <button class="tab-btn" onclick="showTab('calculator',3)"><span class="icon">🧮</span>Calc</button>
+  <button class="tab-btn" onclick="showTab('quiz',4)"><span class="icon">✏️</span>Quiz</button>
+</nav>
+
+<main>
+
+<!-- ═══════ NORMAL CURVE ═══════ -->
+<div id="normal" class="section active">
+  <div class="hero">
+    <div class="hero-eyebrow">TOPIC 01</div>
+    <div class="hero-title">Normal Curve</div>
+    <div class="hero-sub">Z-SCORES · AREAS · PERCENTILES · APPLICATIONS</div>
   </div>
-  <div id="start-prompt"><p>tap anywhere to begin</p></div>
-  <div id="end-screen"><p>silently.</p></div>
-  <div id="poem-container"></div>
-  <div id="progress"></div>
+
+  <div class="grid-2">
+    <div class="concept-card gold"><div class="chip">CONCEPT</div><h4>What is a Z-score?</h4><p>Measures how far a score is from the mean in standard deviations. Z=+1 means 1 SD above; Z=−2 means 2 SDs below.</p></div>
+    <div class="concept-card blue"><div class="chip">FORMULA</div><h4>Z = (x − x̄) / s</h4><p>x = observed score, x̄ = mean, s = standard deviation. Positive Z → above mean. Negative Z → below mean.</p></div>
+    <div class="concept-card green"><div class="chip">READING AREAS</div><h4>Using the Z-Table</h4><p>Table gives area from mean (Z=0) to your Z. Full curve = 1.0; each half = 0.5. Add or subtract areas as needed.</p></div>
+    <div class="concept-card red"><div class="chip">REVERSE LOOKUP</div><h4>Finding Raw Score</h4><p>Rearrange formula: x = Z·s + x̄. Used when you know the percentile cutoff and need the actual score.</p></div>
+  </div>
+
+  <details class="accordion" open>
+    <summary>📘 Worked Example 1 — Computing Z-Scores</summary>
+    <div class="accordion-body">
+      <p style="color:#9ca0b8;font-size:14px;margin-bottom:13px">Given: mean = 65, SD = 6. Find Z-scores for scores 68, 59, 77, 47.</p>
+      <div class="table-wrap"><table class="mini-table">
+        <thead><tr><th>Score (x)</th><th>Formula</th><th>Z</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td>68</td><td>(68−65)/6</td><td class="emph">+0.50</td><td>0.5 SD above mean</td></tr>
+          <tr><td>59</td><td>(59−65)/6</td><td class="emph">−1.00</td><td>1 SD below mean</td></tr>
+          <tr><td>77</td><td>(77−65)/6</td><td class="emph">+2.00</td><td>2 SDs above mean</td></tr>
+          <tr><td>47</td><td>(47−65)/6</td><td class="emph">−3.00</td><td>3 SDs below mean</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+  </details>
+
+  <details class="accordion">
+    <summary>📘 Worked Example 2 — Area Under the Curve</summary>
+    <div class="accordion-body">
+      <p style="color:#9ca0b8;font-size:14px;margin-bottom:14px">Scores normally distributed, mean = 30, SD = 5.</p>
+      <div class="steps">
+        <div class="step"><div class="step-num">a</div><p><strong>≥ 30:</strong> Z = 0. Right half of curve = <span class="pill gold">50%</span></p></div>
+        <div class="step"><div class="step-num">b</div><p><strong>≥ 37:</strong> Z = 1.4. Area from table = 0.4192. Right tail = 0.5 − 0.4192 = <span class="pill gold">8.08%</span></p></div>
+        <div class="step"><div class="step-num">c</div><p><strong>28 to 34:</strong> Z₁=−0.4 (0.1554) + Z₂=0.8 (0.2881) = <span class="pill gold">44.35%</span></p></div>
+      </div>
+    </div>
+  </details>
+
+  <details class="accordion">
+    <summary>📘 Worked Example 3 — Finding the Cutoff Score</summary>
+    <div class="accordion-body">
+      <p style="color:#9ca0b8;font-size:14px;margin-bottom:14px">Mean = 200, SD = 20. Find the lowest value in the upper 10%.</p>
+      <div class="steps">
+        <div class="step"><div class="step-num">1</div><p>Upper 10% is at the right tail. Area from mean to boundary = 0.5 − 0.10 = <strong>0.40</strong></p></div>
+        <div class="step"><div class="step-num">2</div><p>Look up 0.40 in Z-table → closest 0.3997 → <strong>Z ≈ 1.28</strong></p></div>
+        <div class="step"><div class="step-num">3</div><p>x = Z·s + x̄ = (1.28)(20) + 200 = 225.6 → <span class="pill gold">x = 226</span></p></div>
+      </div>
+    </div>
+  </details>
+
+  <div class="calc-box">
+    <div class="calc-box-header"><div class="calc-box-icon gold">📈</div><div><div class="calc-box-title">Z-Score Visualizer</div><div class="calc-box-sub">ENTER VALUES · SEE SHADED AREA ON CURVE</div></div></div>
+    <div class="input-grid">
+      <div class="input-group"><label>MEAN (x̄)</label><input type="number" id="nc_mean" value="30" step="any"></div>
+      <div class="input-group"><label>STD DEV (s)</label><input type="number" id="nc_sd" value="5" step="any" min="0.01"></div>
+      <div class="input-group"><label>SCORE / VALUE</label><input type="number" id="nc_x" value="37" step="any"></div>
+      <div class="input-group"><label>AREA TYPE</label><select id="nc_type"><option value="right">≥ x (right tail)</option><option value="left">≤ x (left tail)</option><option value="between">Between mean & x</option></select></div>
+    </div>
+    <button class="btn gold" onclick="calcNormal()">▶ COMPUTE</button>
+    <div class="result-box" id="nc_result"></div>
+    <div class="curve-wrap" id="nc_curve_wrap"><canvas id="nc_canvas" width="640" height="200"></canvas></div>
+  </div>
 </div>
 
-<button id="voice-btn" aria-label="Toggle voice">
-  <svg id="vicon" viewBox="0 0 24 24">
-    <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM3 9v6h4l5 5V4L7 9H3z"/>
-  </svg>
-</button>
+<!-- ═══════ HYPOTHESIS ═══════ -->
+<div id="hypothesis" class="section">
+  <div class="hero">
+    <div class="hero-eyebrow">TOPIC 02</div>
+    <div class="hero-title">Hypothesis Testing</div>
+    <div class="hero-sub">7-STEP PROCESS · Z-TEST · T-TEST · ERRORS</div>
+  </div>
+
+  <div class="grid-2">
+    <div class="concept-card gold"><div class="chip">H₀ — NULL</div><h4>No Significant Difference</h4><p>Uses =, ≥, or ≤. Default claim — rejected only when evidence strongly contradicts it.</p></div>
+    <div class="concept-card blue"><div class="chip">H₁ — ALTERNATIVE</div><h4>Significant Difference</h4><p>Uses &lt;, >, or ≠. Accepted when H₀ is rejected. Its direction determines the tail type.</p></div>
+    <div class="concept-card red"><div class="chip">TYPE I ERROR — α</div><h4>False Rejection</h4><p>Rejecting H₀ when it's actually true. Controlled by setting α = 0.01 or 0.05.</p></div>
+    <div class="concept-card green"><div class="chip">TYPE II ERROR — β</div><h4>False Acceptance</h4><p>Accepting H₀ when it's actually false. Related to test power = 1 − β.</p></div>
+  </div>
+
+  <div class="card">
+    <h3>📋 The 7 Steps</h3>
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><p><strong>State H₀ and H₁</strong> — write clear null and alternative hypotheses.</p></div>
+      <div class="step"><div class="step-num">2</div><p><strong>Set α</strong> — level of significance: 0.01 (1%) or 0.05 (5%).</p></div>
+      <div class="step"><div class="step-num">3</div><p><strong>Identify test type</strong> — H₁ with &lt; or > → one-tailed. H₁ with ≠ → two-tailed.</p></div>
+      <div class="step"><div class="step-num">4</div><p><strong>Find tabular value</strong> — from Z-table or T-table based on α, tail type, and df.</p></div>
+      <div class="step"><div class="step-num">5</div><p><strong>Compute test statistic</strong> — apply Z or T formula with given data.</p></div>
+      <div class="step"><div class="step-num">6</div><p><strong>Decision</strong> — |computed| > tabular → Reject H₀. Otherwise → Accept H₀.</p></div>
+      <div class="step"><div class="step-num">7</div><p><strong>Conclusion</strong> — interpret the result in real-world context; don't just say "H₀ rejected."</p></div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="concept-card blue"><div class="chip">Z-TEST</div><h4>Large Samples · σ Known</h4><p>Use when population σ is known and n ≥ 30.</p><div style="background:var(--blue-dim);border-radius:8px;padding:10px 13px;margin-top:12px;font-family:var(--fm);font-size:13px;color:var(--blue);overflow-x:auto;white-space:nowrap">Z = (x̄ − μ)√n / σ</div></div>
+    <div class="concept-card gold"><div class="chip">T-TEST</div><h4>Small / Unknown σ</h4><p>Use when σ is unknown — even if n > 30.</p><div style="background:var(--gold-dim);border-radius:8px;padding:10px 13px;margin-top:12px;font-family:var(--fm);font-size:13px;color:var(--gold);overflow-x:auto;white-space:nowrap">t = (x̄ − μ)√(n−1) / s</div></div>
+  </div>
+
+  <div class="card">
+    <h3>📐 Degrees of Freedom (df)</h3>
+    <p>Two formulas — pick based on your test type:</p>
+    <div class="table-wrap"><table class="mini-table">
+      <thead><tr><th>Test Type</th><th>Formula</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr><td>One-sample t-test</td><td class="emph">df = n − 1</td><td>n=20 → df=19</td></tr>
+        <tr><td>Two-sample independent t-test</td><td class="emph">df = n₁ + n₂ − 2</td><td>n₁=25, n₂=30 → df=53</td></tr>
+        <tr><td>Paired / dependent t-test</td><td class="emph">df = n − 1</td><td>n=10 pairs → df=9</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <details class="accordion">
+    <summary>📘 Example: Z-test (One Sample) — Insect Wings</summary>
+    <div class="accordion-body">
+      <p style="color:#9ca0b8;font-size:14px;margin-bottom:13px">50 insects: x̄=17.4mm. Known species: μ=15.4, σ=2.3. α=0.05.</p>
+      <div class="table-wrap"><table class="mini-table">
+        <thead><tr><th>Step</th><th>Value / Action</th></tr></thead>
+        <tbody>
+          <tr><td>H₀</td><td>μ = 15.4 (same species)</td></tr>
+          <tr><td>H₁</td><td>μ ≠ 15.4 → two-tailed</td></tr>
+          <tr><td>Z tabular</td><td>±1.96</td></tr>
+          <tr><td>Z computed</td><td class="emph">(17.4−15.4)√50 / 2.3 = 6.15</td></tr>
+          <tr><td>Decision</td><td>6.15 > 1.96 → Reject H₀</td></tr>
+          <tr><td>Conclusion</td><td>Insects are of a different species.</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+  </details>
+
+  <details class="accordion">
+    <summary>📘 Example: T-test (One Sample) — Perfume Alcohol</summary>
+    <div class="accordion-body">
+      <p style="color:#9ca0b8;font-size:14px;margin-bottom:13px">20 bottles: x̄=29.7%, s=4.8%. Claim: ≤25%. α=0.05.</p>
+      <div class="table-wrap"><table class="mini-table">
+        <thead><tr><th>Step</th><th>Value / Action</th></tr></thead>
+        <tbody>
+          <tr><td>H₀</td><td>μ ≤ 25</td></tr>
+          <tr><td>H₁</td><td>μ > 25 → one-tailed (right)</td></tr>
+          <tr><td>df</td><td>n−1 = 19 → t tabular = 1.729</td></tr>
+          <tr><td>t computed</td><td class="emph">(29.7−25)√19 / 4.8 = 4.27</td></tr>
+          <tr><td>Decision</td><td>4.27 > 1.729 → Reject H₀</td></tr>
+          <tr><td>Conclusion</td><td>Perfume has significantly more than 25% alcohol.</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+  </details>
+
+  <details class="accordion">
+    <summary>📘 Example: T-test (Two Independent) — Mendiola vs Recto</summary>
+    <div class="accordion-body">
+      <p style="color:#9ca0b8;font-size:14px;margin-bottom:13px">Mendiola: n=25, x̄=245, s=103. Recto: n=30, x̄=438, s=79. α=0.05.</p>
+      <div class="table-wrap"><table class="mini-table">
+        <thead><tr><th>Step</th><th>Value / Action</th></tr></thead>
+        <tbody>
+          <tr><td>H₁</td><td>x̄₁ &lt; x̄₂ → one-tailed (left)</td></tr>
+          <tr><td>df</td><td>25 + 30 − 2 = 53 → t tabular = −1.674</td></tr>
+          <tr><td>t computed</td><td class="emph">(245−438) / √(103²/25 + 79²/30) = −23.46</td></tr>
+          <tr><td>Decision</td><td>|−23.46| > 1.674 → Reject H₀</td></tr>
+          <tr><td>Conclusion</td><td>Mean indices in Mendiola are less than in Recto.</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+  </details>
+</div>
+
+<!-- ═══════ FORMULAS ═══════ -->
+<div id="formulas" class="section">
+  <div class="hero">
+    <div class="hero-eyebrow">REFERENCE</div>
+    <div class="hero-title">Formula Sheet</div>
+    <div class="hero-sub">ALL FORMULAS FROM YOUR EXAM SHEET</div>
+  </div>
+
+  <div class="formula-grid">
+    <div class="formula-card"><div class="fc-label">STANDARD SCORE</div><div class="fc-name">Z-Score</div><div class="fc-eq">Z = (x − x̄) / s</div><div class="fc-vars">x = observed value<br>x̄ = mean<br>s = standard deviation</div></div>
+    <div class="formula-card"><div class="fc-label">Z-TEST · ONE SAMPLE</div><div class="fc-name">Large Sample vs Population</div><div class="fc-eq">Z = (x̄ − μ)√n / σ</div><div class="fc-vars">x̄ = sample mean<br>μ = population mean<br>σ = population SD · n = size</div></div>
+    <div class="formula-card"><div class="fc-label">Z-TEST · TWO SAMPLES</div><div class="fc-name">Comparing Two Large Means</div><div class="fc-eq">Z = (x̄₁−x̄₂) / σ√(1/n₁+1/n₂)</div><div class="fc-vars">x̄₁, x̄₂ = sample means<br>σ = population SD<br>n₁, n₂ = sample sizes</div></div>
+    <div class="formula-card"><div class="fc-label">T-TEST · ONE SAMPLE</div><div class="fc-name">Small Sample / Unknown σ</div><div class="fc-eq">t = (x̄ − μ)√(n−1) / s</div><div class="fc-vars">x̄ = sample mean<br>μ = population mean<br>s = sample SD · df = n−1</div></div>
+    <div class="formula-card"><div class="fc-label">T-TEST · INDEPENDENT</div><div class="fc-name">Two Sample Means (Indep.)</div><div class="fc-eq">t = (x̄₁−x̄₂) / √(s₁²/n₁+s₂²/n₂)</div><div class="fc-vars">s₁, s₂ = sample SDs<br>n₁, n₂ = sizes<br>df = n₁ + n₂ − 2</div></div>
+    <div class="formula-card"><div class="fc-label">T-TEST · DEPENDENT/PAIRED</div><div class="fc-name">Two Sample Means (Dep.)</div><div class="fc-eq">t = x̄_D / (s_D / √n)</div><div class="fc-vars">x̄_D = mean of differences<br>s_D = SD of differences<br>df = n−1 (n = pairs)</div></div>
+    <div class="formula-card"><div class="fc-label">DEPENDENT SD</div><div class="fc-name">s_D Formula</div><div class="fc-eq">s_D = √[Σ(x_D−x̄_D)²/(n−1)]</div><div class="fc-vars">x_D = each pair difference<br>x̄_D = mean of differences</div></div>
+    <div class="formula-card"><div class="fc-label">DEGREES OF FREEDOM</div><div class="fc-name">df — Two Versions</div><div class="fc-eq">df = n − 1</div><div class="fc-eq">df = n₁ + n₂ − 2</div><div class="fc-vars">Top: one-sample & paired<br>Bottom: two independent samples</div></div>
+    <div class="formula-card"><div class="fc-label">REVERSE Z LOOKUP</div><div class="fc-name">Finding Raw Score x</div><div class="fc-eq">x = Z · s + x̄</div><div class="fc-vars">Z = from table for target area<br>s = SD · x̄ = mean</div></div>
+  </div>
+
+  <div class="card">
+    <h3>⚖️ Z-test vs T-test Quick Decider</h3>
+    <div class="table-wrap"><table class="mini-table">
+      <thead><tr><th>Situation</th><th>Use</th><th>df</th></tr></thead>
+      <tbody>
+        <tr><td>σ known, n ≥ 30</td><td class="emph">Z-test</td><td>—</td></tr>
+        <tr><td>σ unknown, any n</td><td class="emph">T-test</td><td>n−1</td></tr>
+        <tr><td>Two independent groups, σ unknown</td><td class="emph">Two-sample T</td><td>n₁+n₂−2</td></tr>
+        <tr><td>Before/after same subjects</td><td class="emph">Paired T-test</td><td>n−1</td></tr>
+        <tr><td>Two independent groups, σ known</td><td class="emph">Two-sample Z</td><td>—</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- ═══════ CALCULATOR ═══════ -->
+<div id="calculator" class="section">
+  <div class="hero">
+    <div class="hero-eyebrow">TOOL</div>
+    <div class="hero-title">Live Calculator</div>
+    <div class="hero-sub">Z-SCORE · NORMAL AREA · Z-TEST · T-TEST</div>
+  </div>
+
+  <div class="calc-box">
+    <div class="calc-box-header"><div class="calc-box-icon gold">🔢</div><div><div class="calc-box-title">Z-Score Calculator</div><div class="calc-box-sub">RAW SCORE → STANDARD SCORE + PERCENTILE</div></div></div>
+    <div class="input-grid">
+      <div class="input-group"><label>SCORE (x)</label><input type="number" id="zs_x" value="88" step="any"></div>
+      <div class="input-group"><label>MEAN (x̄)</label><input type="number" id="zs_mean" value="82" step="any"></div>
+      <div class="input-group"><label>STD DEV (s)</label><input type="number" id="zs_sd" value="8" step="any" min="0.01"></div>
+    </div>
+    <button class="btn gold" onclick="calcZScore()">▶ CALCULATE Z</button>
+    <div class="result-box" id="zs_result"></div>
+  </div>
+
+  <div class="calc-box">
+    <div class="calc-box-header"><div class="calc-box-icon gold">📈</div><div><div class="calc-box-title">Normal Area Calculator</div><div class="calc-box-sub">FIND % AREA UNDER THE CURVE</div></div></div>
+    <div class="input-grid">
+      <div class="input-group"><label>MEAN (x̄)</label><input type="number" id="nc_mean" value="30" step="any"></div>
+      <div class="input-group"><label>STD DEV (s)</label><input type="number" id="nc_sd" value="5" step="any" min="0.01"></div>
+      <div class="input-group"><label>SCORE / VALUE</label><input type="number" id="nc_x" value="37" step="any"></div>
+      <div class="input-group"><label>AREA TYPE</label><select id="nc_type"><option value="right">≥ x (right tail)</option><option value="left">≤ x (left tail)</option><option value="between">Between mean & x</option></select></div>
+    </div>
+    <button class="btn gold" onclick="calcNormal()">▶ COMPUTE</button>
+    <div class="result-box" id="nc_result"></div>
+    <div class="curve-wrap" id="nc_curve_wrap"><canvas id="nc_canvas" width="640" height="200"></canvas></div>
+  </div>
+
+  <div class="calc-box">
+    <div class="calc-box-header"><div class="calc-box-icon blue">📊</div><div><div class="calc-box-title">One-Sample Z-Test</div><div class="calc-box-sub">σ KNOWN · n ≥ 30</div></div></div>
+    <div class="input-grid">
+      <div class="input-group"><label>SAMPLE MEAN (x̄)</label><input type="number" id="z1_xbar" value="17.4" step="any"></div>
+      <div class="input-group"><label>POP. MEAN (μ)</label><input type="number" id="z1_mu" value="15.4" step="any"></div>
+      <div class="input-group"><label>POP. STD DEV (σ)</label><input type="number" id="z1_sigma" value="2.3" step="any" min="0.01"></div>
+      <div class="input-group"><label>SAMPLE SIZE (n)</label><input type="number" id="z1_n" value="50" min="1"></div>
+      <div class="input-group"><label>LEVEL α</label><select id="z1_alpha"><option value="0.05">0.05</option><option value="0.01">0.01</option></select></div>
+      <div class="input-group"><label>TAIL</label><select id="z1_tail"><option value="two">Two-tailed (≠)</option><option value="right">Right (&gt;)</option><option value="left">Left (&lt;)</option></select></div>
+    </div>
+    <button class="btn blue" onclick="calcZ1()">▶ RUN Z-TEST</button>
+    <div class="result-box" id="z1_result"></div>
+  </div>
+
+  <div class="calc-box">
+    <div class="calc-box-header"><div class="calc-box-icon blue">📊</div><div><div class="calc-box-title">Two-Sample Z-Test</div><div class="calc-box-sub">COMPARE TWO LARGE GROUPS · σ KNOWN</div></div></div>
+    <div class="input-grid">
+      <div class="input-group"><label>MEAN 1 (x̄₁)</label><input type="number" id="z2_x1" value="3.98" step="any"></div>
+      <div class="input-group"><label>MEAN 2 (x̄₂)</label><input type="number" id="z2_x2" value="4.12" step="any"></div>
+      <div class="input-group"><label>POP. STD DEV (σ)</label><input type="number" id="z2_sigma" value="0.27" step="any" min="0.001"></div>
+      <div class="input-group"><label>SIZE 1 (n₁)</label><input type="number" id="z2_n1" value="75" min="1"></div>
+      <div class="input-group"><label>SIZE 2 (n₂)</label><input type="number" id="z2_n2" value="40" min="1"></div>
+      <div class="input-group"><label>LEVEL α</label><select id="z2_alpha"><option value="0.05">0.05</option><option value="0.01" selected>0.01</option></select></div>
+      <div class="input-group"><label>TAIL</label><select id="z2_tail"><option value="two">Two-tailed (≠)</option><option value="right">Right (&gt;)</option><option value="left">Left (&lt;)</option></select></div>
+    </div>
+    <button class="btn blue" onclick="calcZ2()">▶ RUN Z-TEST</button>
+    <div class="result-box" id="z2_result"></div>
+  </div>
+
+  <div class="calc-box">
+    <div class="calc-box-header"><div class="calc-box-icon gold">📉</div><div><div class="calc-box-title">One-Sample T-Test</div><div class="calc-box-sub">σ UNKNOWN · ANY n · df = n−1</div></div></div>
+    <div class="input-grid">
+      <div class="input-group"><label>SAMPLE MEAN (x̄)</label><input type="number" id="t1_xbar" value="29.7" step="any"></div>
+      <div class="input-group"><label>POP. MEAN (μ)</label><input type="number" id="t1_mu" value="25" step="any"></div>
+      <div class="input-group"><label>SAMPLE STD DEV (s)</label><input type="number" id="t1_s" value="4.8" step="any" min="0.01"></div>
+      <div class="input-group"><label>SAMPLE SIZE (n)</label><input type="number" id="t1_n" value="20" min="2"></div>
+      <div class="input-group"><label>LEVEL α</label><select id="t1_alpha"><option value="0.05">0.05</option><option value="0.01">0.01</option></select></div>
+      <div class="input-group"><label>TAIL</label><select id="t1_tail"><option value="two">Two-tailed (≠)</option><option value="right" selected>Right (&gt;)</option><option value="left">Left (&lt;)</option></select></div>
+    </div>
+    <button class="btn gold" onclick="calcT1()">▶ RUN T-TEST</button>
+    <div class="result-box" id="t1_result"></div>
+  </div>
+
+  <div class="calc-box">
+    <div class="calc-box-header"><div class="calc-box-icon green">📉</div><div><div class="calc-box-title">Two-Sample Independent T-Test</div><div class="calc-box-sub">σ UNKNOWN · df = n₁ + n₂ − 2</div></div></div>
+    <div class="input-grid">
+      <div class="input-group"><label>MEAN 1 (x̄₁)</label><input type="number" id="t2_x1" value="245" step="any"></div>
+      <div class="input-group"><label>MEAN 2 (x̄₂)</label><input type="number" id="t2_x2" value="438" step="any"></div>
+      <div class="input-group"><label>STD DEV 1 (s₁)</label><input type="number" id="t2_s1" value="103" step="any" min="0.001"></div>
+      <div class="input-group"><label>STD DEV 2 (s₂)</label><input type="number" id="t2_s2" value="79" step="any" min="0.001"></div>
+      <div class="input-group"><label>SIZE 1 (n₁)</label><input type="number" id="t2_n1" value="25" min="2"></div>
+      <div class="input-group"><label>SIZE 2 (n₂)</label><input type="number" id="t2_n2" value="30" min="2"></div>
+      <div class="input-group"><label>LEVEL α</label><select id="t2_alpha"><option value="0.05">0.05</option><option value="0.01">0.01</option></select></div>
+      <div class="input-group"><label>TAIL</label><select id="t2_tail"><option value="two">Two-tailed (≠)</option><option value="right">Right (&gt;)</option><option value="left" selected>Left (&lt;)</option></select></div>
+    </div>
+    <button class="btn green" onclick="calcT2()">▶ RUN T-TEST</button>
+    <div class="result-box" id="t2_result"></div>
+  </div>
+</div>
+
+<!-- ═══════ QUIZ ═══════ -->
+<div id="quiz" class="section">
+  <div class="hero">
+    <div class="hero-eyebrow">PRACTICE</div>
+    <div class="hero-title">Quiz</div>
+    <div class="hero-sub">6 QUESTIONS · TAP TO CHECK YOUR ANSWER</div>
+  </div>
+  <div class="quiz-score" id="quiz_score"><div class="quiz-score-num" id="quiz_score_num">0/6</div><div class="quiz-score-label">FINAL SCORE</div></div>
+  <div class="quiz-wrap" id="quiz-container"></div>
+  <button class="btn gold" style="margin-top:10px;width:100%" onclick="resetQuiz()">↺ RESET QUIZ</button>
+</div>
+
+</main>
 
 <script>
-/* ═══════════════════════════════════════════
-   POEM DATA
-═══════════════════════════════════════════ */
-const stanzas = [
-  { large:true,  hold:4200, voice:`He laughed. Because laughter was easier.`,
-    html:`He <b>laughed</b><br>because <b>laughter</b> was easier.` },
+/* ── TAB SWITCHING ─────────────────────────────── */
+const TABS=['normal','hypothesis','formulas','calculator','quiz'];
+function showTab(id,idx){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  ['desktopNav','mobileNav'].forEach(navId=>{
+    const nav=document.getElementById(navId);
+    if(!nav)return;
+    nav.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',i===idx));
+  });
+  window.scrollTo({top:0,behavior:'smooth'});
+}
 
-  { hold:5800, voice:`It was easier than explaining why his eyes looked tired, why his chest felt heavy, why the nights felt longer than they should.`,
-    html:`It was easier than explaining<br>why his eyes looked tired,<br>why his chest felt heavy,<br>why the nights felt longer<br>than they should.` },
+/* ── NORMAL DISTRIBUTION ───────────────────────── */
+function normalPDF(x){return Math.exp(-0.5*x*x)/Math.sqrt(2*Math.PI)}
+function normalCDF(z){
+  const t=1/(1+0.2316419*Math.abs(z)),d=normalPDF(z);
+  const p=d*t*(0.319381530+t*(-0.356563782+t*(1.781477937+t*(-1.821255978+t*1.330274429))));
+  return z>0?1-p:p;
+}
+function zArea(z){return Math.abs(normalCDF(Math.abs(z))-0.5)}
 
-  { large:true, hold:3600, voice:`So he laughed.`,
-    html:`So he <b>laughed</b>.` },
+/* ── DRAW NORMAL CURVE ─────────────────────────── */
+function drawCurve(z,type){
+  const canvas=document.getElementById('nc_canvas');
+  if(!canvas)return;
+  const dpr=window.devicePixelRatio||1;
+  const dW=canvas.parentElement.clientWidth-28;
+  const dH=Math.max(130,Math.min(195,dW*0.31));
+  canvas.style.width=dW+'px';canvas.style.height=dH+'px';
+  canvas.width=dW*dpr;canvas.height=dH*dpr;
+  const ctx=canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+  const W=dW,H=dH,xMin=-3.5,xMax=3.5,yMax=0.43;
+  const p={l:22,r:22,t:16,b:26},w=W-p.l-p.r,h=H-p.t-p.b;
+  const cx=v=>p.l+((v-xMin)/(xMax-xMin))*w;
+  const cy=v=>p.t+h-(v/yMax)*h;
+  ctx.clearRect(0,0,W,H);
+  // fill
+  const clr={right:'rgba(240,168,64,.28)',left:'rgba(91,156,246,.28)',between:'rgba(93,232,168,.26)'};
+  ctx.fillStyle=clr[type]||clr.right;
+  ctx.beginPath();
+  const s=type==='right'?z:type==='left'?xMin:Math.min(0,z);
+  const e=type==='right'?xMax:type==='left'?z:Math.max(0,z);
+  ctx.moveTo(cx(s),cy(0));
+  for(let v=s;v<=e;v+=0.02)ctx.lineTo(cx(v),cy(normalPDF(v)));
+  ctx.lineTo(cx(e),cy(0));ctx.closePath();ctx.fill();
+  // curve
+  ctx.beginPath();ctx.strokeStyle='#5b9cf6';ctx.lineWidth=2;
+  for(let v=xMin;v<=xMax;v+=0.04){const px=cx(v),py=cy(normalPDF(v));v===xMin?ctx.moveTo(px,py):ctx.lineTo(px,py)}
+  ctx.stroke();
+  // Z line
+  ctx.beginPath();ctx.strokeStyle='#f0a840';ctx.lineWidth=1.5;ctx.setLineDash([3,3]);
+  ctx.moveTo(cx(z),cy(0));ctx.lineTo(cx(z),cy(normalPDF(z)));ctx.stroke();ctx.setLineDash([]);
+  // axis
+  ctx.beginPath();ctx.strokeStyle='#1e2235';ctx.lineWidth=1;
+  ctx.moveTo(p.l,cy(0));ctx.lineTo(W-p.r,cy(0));ctx.stroke();
+  // labels
+  const fs=Math.max(8.5,dW/76);
+  ctx.fillStyle='#606480';ctx.font=`${fs}px DM Mono,monospace`;ctx.textAlign='center';
+  [-3,-2,-1,0,1,2,3].forEach(v=>ctx.fillText(v,cx(v),H-5));
+  ctx.fillStyle='#f0a840';ctx.fillText('Z='+z.toFixed(2),cx(z),cy(normalPDF(z))-6);
+}
 
-  { hold:5800, voice:`He laughed when the weight became too much. He laughed when his heart felt empty. He laughed when the sadness inside him grew too large for words.`,
-    html:`He <b>laughed</b> when the weight became too much.<br>He <b>laughed</b> when his heart felt empty.<br>He <b>laughed</b> when the sadness inside him<br>grew too large for words.` },
+/* ── NORMAL CALC ───────────────────────────────── */
+function calcNormal(){
+  const mean=parseFloat(document.getElementById('nc_mean').value);
+  const sd=parseFloat(document.getElementById('nc_sd').value);
+  const x=parseFloat(document.getElementById('nc_x').value);
+  const type=document.getElementById('nc_type').value;
+  if([mean,sd,x].some(isNaN)||sd<=0)return;
+  const z=(x-mean)/sd;
+  let area,label;
+  if(type==='right'){area=1-normalCDF(z);label=`P(X ≥ ${x})`}
+  else if(type==='left'){area=normalCDF(z);label=`P(X ≤ ${x})`}
+  else{area=zArea(z);label=`P(${Math.min(mean,x).toFixed(2)} to ${Math.max(mean,x).toFixed(2)})`}
+  const res=document.getElementById('nc_result');
+  res.className='result-box visible';
+  res.innerHTML=`<div class="result-row"><span class="rkey">Z-SCORE</span><span class="rval">${z.toFixed(4)}</span></div><div class="result-row"><span class="rkey">${label}</span><span class="rval">${(area*100).toFixed(2)}%</span></div><div class="result-row"><span class="rkey">Z-TABLE AREA (0 to |Z|)</span><span class="rval">${zArea(z).toFixed(4)}</span></div>`;
+  const wrap=document.getElementById('nc_curve_wrap');
+  wrap.style.display='block';
+  setTimeout(()=>drawCurve(z,type),30);
+}
 
-  { hold:3800, voice:`And people believed the laughter.`,
-    html:`And people believed the laughter.` },
+/* ── Z-SCORE CALC ──────────────────────────────── */
+function calcZScore(){
+  const x=parseFloat(document.getElementById('zs_x').value);
+  const mean=parseFloat(document.getElementById('zs_mean').value);
+  const sd=parseFloat(document.getElementById('zs_sd').value);
+  if([x,mean,sd].some(isNaN)||sd<=0)return;
+  const z=(x-mean)/sd;
+  const res=document.getElementById('zs_result');
+  res.className='result-box visible';
+  res.innerHTML=`<div class="result-row"><span class="rkey">FORMULA: (${x}−${mean})/${sd}</span><span class="rval">${z.toFixed(4)}</span></div><div class="result-row"><span class="rkey">INTERPRETATION</span><span class="rval">${Math.abs(z).toFixed(2)} SD ${z>=0?'above':'below'} mean</span></div><div class="result-row"><span class="rkey">PERCENTILE RANK</span><span class="rval">${(normalCDF(z)*100).toFixed(2)}%</span></div>`;
+}
 
-  { hold:4600, voice:`They heard joy in it. They heard light. They heard someone who was fine.`,
-    html:`They heard joy in it.<br>They heard light.<br>They heard someone who was fine.` },
+/* ── CRITICAL VALUES ───────────────────────────── */
+function zCrit(a,t){return t==='two'?(a==='0.05'?1.96:2.576):(a==='0.05'?1.645:2.326)}
+function tCrit(df,a,t){
+  const T={'0.05_two':[12.706,4.303,3.182,2.776,2.571,2.447,2.365,2.306,2.262,2.228,2.201,2.179,2.160,2.145,2.131,2.120,2.110,2.101,2.093,2.086,2.080,2.074,2.069,2.064,2.060,2.056,2.052,2.048,2.045,2.042,2.021,2.000,1.990,1.984,1.960],'0.05_one':[6.314,2.920,2.353,2.132,2.015,1.943,1.895,1.860,1.833,1.812,1.796,1.782,1.771,1.761,1.753,1.746,1.740,1.734,1.729,1.725,1.721,1.717,1.714,1.711,1.708,1.706,1.703,1.701,1.699,1.697,1.684,1.671,1.664,1.660,1.645],'0.01_two':[63.657,9.925,5.841,4.604,4.032,3.707,3.499,3.355,3.250,3.169,3.106,3.055,3.012,2.977,2.947,2.921,2.898,2.878,2.861,2.845,2.831,2.819,2.807,2.797,2.787,2.779,2.771,2.763,2.756,2.750,2.704,2.660,2.639,2.626,2.576],'0.01_one':[31.821,6.965,4.541,3.747,3.365,3.143,2.998,2.896,2.821,2.764,2.718,2.681,2.650,2.624,2.602,2.583,2.567,2.552,2.539,2.528,2.518,2.508,2.500,2.492,2.485,2.479,2.473,2.467,2.462,2.457,2.423,2.390,2.374,2.364,2.326]};
+  const k=`${a}_${t==='two'?'two':'one'}`;const tbl=T[k];if(!tbl)return 1.96;
+  return df>=120?tbl[34]:df>30?tbl[30]:tbl[Math.max(0,Math.min(df-1,29))];
+}
 
-  { large:true, hold:4200, voice:`No one heard the pain beneath it.`,
-    html:`No one heard the <b>pain</b> beneath it.` },
+/* ── SHOW RESULT ───────────────────────────────── */
+function showRes(id,d){
+  const tl=d.tail==='two'?'Two-tailed (≠)':d.tail==='right'?'Right-tailed (>)':'Left-tailed (<)';
+  const sg=d.tail==='two'?'±':d.tail==='right'?'':'−';
+  const res=document.getElementById(id);
+  res.className='result-box visible';
+  res.innerHTML=`<div class="result-row"><span class="rkey">FORMULA</span><span class="rval" style="font-size:11px">${d.formula}</span></div><div class="result-row"><span class="rkey">COMPUTED ${d.type}</span><span class="rval">${d.comp.toFixed(4)}</span></div><div class="result-row"><span class="rkey">TABULAR ${d.type} (α=${d.alpha}, ${tl})</span><span class="rval">${sg}${Math.abs(d.tab).toFixed(4)}</span></div>${d.df!==undefined?`<div class="result-row"><span class="rkey">DEGREES OF FREEDOM</span><span class="rval">${d.df}</span></div>`:''}<div class="verdict ${d.reject?'reject':'accept'}">${d.reject?`✗ |${d.comp.toFixed(3)}| > ${d.tab.toFixed(3)} → REJECT H₀ — Accept H₁`:`✓ |${d.comp.toFixed(3)}| < ${d.tab.toFixed(3)} → ACCEPT H₀ — Fail to reject null`}</div>`;
+}
 
-  { hold:6200, voice:`No one noticed that every laugh was forced, that every smile hid another wound, that behind the warmth he gave was a person growing colder inside.`,
-    html:`No one noticed<br>that every laugh was forced,<br>that every smile hid another wound,<br>that behind the warmth he gave<br>was a person growing colder inside.` },
+function g(id){return parseFloat(document.getElementById(id).value)}
+function gi(id){return parseInt(document.getElementById(id).value)}
+function gs(id){return document.getElementById(id).value}
 
-  { hold:3800, voice:`They said pressure would make him stronger.`,
-    html:`They said pressure would make him stronger.` },
+function calcZ1(){const xb=g('z1_xbar'),mu=g('z1_mu'),sig=g('z1_sigma'),n=gi('z1_n'),a=gs('z1_alpha'),t=gs('z1_tail'),zc=(xb-mu)*Math.sqrt(n)/sig,zt=zCrit(a,t);showRes('z1_result',{formula:`Z=(${xb}−${mu})√${n}/${sig}`,comp:zc,tab:zt,alpha:a,tail:t,reject:Math.abs(zc)>zt,type:'Z'})}
+function calcZ2(){const x1=g('z2_x1'),x2=g('z2_x2'),sig=g('z2_sigma'),n1=gi('z2_n1'),n2=gi('z2_n2'),a=gs('z2_alpha'),t=gs('z2_tail'),zc=(x1-x2)/(sig*Math.sqrt(1/n1+1/n2)),zt=zCrit(a,t);showRes('z2_result',{formula:`Z=(${x1}−${x2})/${sig}√(1/${n1}+1/${n2})`,comp:zc,tab:zt,alpha:a,tail:t,reject:Math.abs(zc)>zt,type:'Z'})}
+function calcT1(){const xb=g('t1_xbar'),mu=g('t1_mu'),s=g('t1_s'),n=gi('t1_n'),a=gs('t1_alpha'),t=gs('t1_tail'),df=n-1,tc=(xb-mu)*Math.sqrt(df)/s,tt=tCrit(df,a,t);showRes('t1_result',{formula:`t=(${xb}−${mu})√${df}/${s}`,comp:tc,tab:tt,df,alpha:a,tail:t,reject:Math.abs(tc)>tt,type:'T'})}
+function calcT2(){const x1=g('t2_x1'),x2=g('t2_x2'),s1=g('t2_s1'),s2=g('t2_s2'),n1=gi('t2_n1'),n2=gi('t2_n2'),a=gs('t2_alpha'),t=gs('t2_tail'),df=n1+n2-2,tc=(x1-x2)/Math.sqrt(s1*s1/n1+s2*s2/n2),tt=tCrit(df,a,t);showRes('t2_result',{formula:`t=(${x1}−${x2})/√(${s1}²/${n1}+${s2}²/${n2})`,comp:tc,tab:tt,df,alpha:a,tail:t,reject:Math.abs(tc)>tt,type:'T'})}
 
-  { hold:3800, voice:`But pressure was not making him stronger.`,
-    html:`But pressure was not making him stronger.` },
-
-  { large:true, hold:3900, voice:`It was hollowing him out.`,
-    html:`It was <b>hollowing</b> him out.` },
-
-  { hold:5200, voice:`Little by little, it took his sleep, his peace, his hope.`,
-    html:`Little by little,<br>it took his sleep,<br>his peace,<br>his hope.` },
-
-  { hold:5800, voice:`Until all that was left was the sound of laughter echoing from someone who no longer felt alive.`,
-    html:`Until all that was left<br>was the sound of <b>laughter</b><br>echoing from someone<br>who no longer felt alive.` },
-
-  { large:true, hold:4000, voice:`Still. He laughed.`,
-    html:`Still, he <b>laughed</b>.` },
-
-  { hold:3800, voice:`Because laughter made people comfortable.`,
-    html:`Because <b>laughter</b> made people comfortable.` },
-
-  { large:true, hold:3600, voice:`Pain did not.`,
-    html:`<b>Pain</b> did not.` },
-
-  { hold:3800, voice:`Pain made people look away.`,
-    html:`<b>Pain</b> made people look away.` },
-
-  { hold:5000, voice:`So he gave them laughter. He gave them smiles. He gave them jokes.`,
-    html:`So he gave them <b>laughter</b>.<span class="gap"></span>He gave them smiles.<br>He gave them jokes.` },
-
-  { hold:4200, voice:`And in return, they gave him silence.`,
-    html:`And in return,<br>they gave him <b>silence</b>.` },
-
-  { hold:5400, voice:`No one asked why the happiest person in the room looked so tired when no one was watching.`,
-    html:`No one asked why the happiest person in the room<br>looked so tired when no one was watching.` },
-
-  { hold:5200, voice:`No one saw that the louder he laughed, the closer he was to disappearing.`,
-    html:`No one saw<br>that the louder he <b>laughed</b>,<br>the closer he was to <b>disappearing</b>.` },
-
-  { large:true, hold:4400, voice:`And one day, the laughter stopped.`,
-    html:`And one day,<br>the <b>laughter</b> stopped.` },
-
-  { hold:4600, voice:`The room was quiet. The smiles were gone.`,
-    html:`The room was quiet.<span class="gap"></span>The smiles were gone.` },
-
-  { hold:6000, voice:`And all the people who once believed he was happy were left staring at the silence he had been carrying alone.`,
-    html:`And all the people who once believed he was happy<br>were left staring at the <b>silence</b><br>he had been carrying <b>alone</b>.` },
-
-  { hold:4800, voice:`They said they never knew. They said there were no signs.`,
-    html:`They said they never knew.<span class="gap"></span>They said there were no signs.` },
-
-  { large:true, hold:3900, voice:`But there were signs.`,
-    html:`But there were signs.` },
-
-  { hold:3800, voice:`His laughter was the sign.`,
-    html:`His <b>laughter</b> was the sign.` },
-
-  { hold:6200, voice:`Every joke was a wound. Every smile was a goodbye spoken in a language no one cared enough to understand.`,
-    html:`Every joke was a wound.<span class="gap"></span>Every smile was a goodbye<br>spoken in a language<br>no one cared enough to understand.` },
-
-  { hold:4600, voice:`And in the end, he became exactly what he feared.`,
-    html:`And in the end,<br>he became exactly what he feared:` },
-
-  { large:true, hold:5800, voice:`A tragedy. People only understood when it was too late.`,
-    html:`a <b>tragedy</b><br>people only understood<br>when it was <b>too late</b>.` },
-
-  { hold:6800, voice:`Now all that remains is the memory of someone who made everyone laugh while quietly begging for someone to notice he was fading.`,
-    html:`Now all that remains<br>is the memory of someone<br>who made everyone <b>laugh</b><br>while quietly begging for someone<br>to notice he was fading.` },
-
-  { large:true, hold:4000, voice:`But no one did.`,
-    html:`But no one did.` },
-
-  { hold:4400, voice:`So he vanished the same way he suffered.`,
-    html:`So he <b>vanished</b><br>the same way he suffered:` },
-
-  { large:true, hold:5000, voice:`Silently.`,
-    html:`silently.` },
-
-  { hold:3800, voice:`And the cruelest part was this.`,
-    html:`And the cruelest part was this:` },
-
-  { hold:6000, voice:`The world did not break with him. Morning still came. People still laughed. Life still moved.`,
-    html:`The world did not break with him.<span class="gap"></span>Morning still came.<br>People still <b>laughed</b>.<br>Life still moved.` },
-
-  { hold:5200, voice:`As if the boy who carried so much pain had never been there at all.`,
-    html:`As if the boy who carried so much <b>pain</b><br>had never been there at all.` },
-
-  { hold:5400, voice:`And somewhere in the silence he left behind lived the truth no one saw.`,
-    html:`And somewhere in the <b>silence</b> he left behind<br>lived the truth no one saw:` },
-
-  { hold:4200, voice:`He was never asking to be saved.`,
-    html:`He was never asking to be saved.` },
-
-  { hold:5200, voice:`He was only hoping someone would notice that behind all the laughter,`,
-    html:`He was only hoping<br>someone would notice<br>that behind all the <b>laughter</b>,` },
-
-  { large:true, hold:6500, linger:true, voice:`He was already gone.`,
-    html:`he was <b>already gone</b>.` },
+/* ── QUIZ ──────────────────────────────────────── */
+const QD=[
+  {q:"A researcher tests H₁: μ₁ ≠ μ₂. What type of test is this?",opts:["Left-tailed","Right-tailed","Two-tailed","One-sample Z"],ans:2,ex:"≠ in H₁ always means a two-tailed (non-directional) test."},
+  {q:"Mean = 50, SD = 10, score = 65. What is the Z-score?",opts:["1.0","1.5","−1.5","0.5"],ans:1,ex:"Z = (65−50)/10 = 1.5"},
+  {q:"You reject H₀ when it is actually true. This is a:",opts:["Type II Error","Type I Error","Power error","Significance error"],ans:1,ex:"Type I Error (α) = rejecting a true H₀."},
+  {q:"When should you use a T-test instead of a Z-test?",opts:["n ≥ 30 and σ known","σ is unknown, even if n > 30","Always when n < 30","When α = 0.01"],ans:1,ex:"Use T-test when population σ is unknown."},
+  {q:"For α = 0.05, two-tailed Z-test, the critical value is:",opts:["1.645","2.326","1.96","2.576"],ans:2,ex:"Z_α = ±1.96 for α=0.05 two-tailed."},
+  {q:"Two independent groups, σ unknown. What is df?",opts:["n−1","n₁+n₂","n₁+n₂−2","(n₁+n₂)/2"],ans:2,ex:"df = n₁ + n₂ − 2 for two-sample independent t-test."},
 ];
-
-/* ═══════════════════════════════════════════
-   DOM
-═══════════════════════════════════════════ */
-const poemContainer = document.getElementById('poem-container');
-const titleScreen   = document.getElementById('title-screen');
-const titleH1       = document.getElementById('title-h1');
-const titleSub      = document.getElementById('title-sub');
-const startPrompt   = document.getElementById('start-prompt');
-const endScreen     = document.getElementById('end-screen');
-const progressBar   = document.getElementById('progress');
-const voiceBtn      = document.getElementById('voice-btn');
-const vicon         = document.getElementById('vicon');
-
-/* Build stanza elements — all invisible, stacked */
-const els = stanzas.map((s, i) => {
-  const div = document.createElement('div');
-  div.className = 'stanza' + (s.large ? ' large' : '');
-  div.id = `s${i}`;
-  div.style.opacity = '0';          // start fully hidden
-  const p = document.createElement('p');
-  p.innerHTML = s.html;
-  div.appendChild(p);
-  poemContainer.appendChild(div);
-  return div;
-});
-
-/* ═══════════════════════════════════════════
-   FADE HELPER
-   Pure JS linear fade — no CSS animation classes.
-   Calls back when done.
-═══════════════════════════════════════════ */
-const activeTimers = new Map(); // el → animFrame id
-
-function fadeTo(el, targetOpacity, durationMs, onDone) {
-  // Cancel any running fade on this element
-  if (activeTimers.has(el)) {
-    cancelAnimationFrame(activeTimers.get(el));
-    activeTimers.delete(el);
+let QA=[];
+function buildQuiz(){
+  QA=new Array(QD.length).fill(null);
+  document.getElementById('quiz_score').className='quiz-score';
+  document.getElementById('quiz-container').innerHTML=QD.map((q,i)=>`
+    <div class="quiz-q-card" id="qq${i}">
+      <div class="quiz-q-num">QUESTION ${i+1} OF ${QD.length}</div>
+      <div class="quiz-q-text">${q.q}</div>
+      <div class="quiz-opts">${q.opts.map((o,j)=>`<button class="quiz-opt" onclick="answerQ(${i},${j})">${o}</button>`).join('')}</div>
+      <div class="quiz-feedback" id="qfb${i}"></div>
+    </div>`).join('');
+}
+function answerQ(qi,oi){
+  if(QA[qi]!==null)return;
+  QA[qi]=oi;
+  const q=QD[qi];
+  document.getElementById(`qq${qi}`).querySelectorAll('.quiz-opt').forEach((b,j)=>{
+    b.disabled=true;
+    if(j===q.ans)b.classList.add('correct');
+    else if(j===oi)b.classList.add('wrong');
+  });
+  const fb=document.getElementById(`qfb${qi}`);
+  const ok=oi===q.ans;
+  fb.className=`quiz-feedback show ${ok?'ok':'bad'}`;
+  fb.textContent=(ok?'✓ Correct! ':'✗ Incorrect. ')+q.ex;
+  if(QA.every(a=>a!==null)){
+    const sc=QA.filter((a,i)=>a===QD[i].ans).length;
+    const el=document.getElementById('quiz_score');
+    el.className='quiz-score show';
+    const num=document.getElementById('quiz_score_num');
+    num.textContent=`${sc}/${QD.length}`;
+    num.style.color=sc>=5?'var(--green)':sc>=3?'var(--gold)':'var(--red)';
+    el.scrollIntoView({behavior:'smooth',block:'nearest'});
   }
+}
+function resetQuiz(){buildQuiz();window.scrollTo({top:0,behavior:'smooth'})}
 
-  const startOpacity = parseFloat(el.style.opacity) || 0;
-  const diff         = targetOpacity - startOpacity;
-  let   startTime    = null;
+buildQuiz();
 
-  function step(ts) {
-    if (!startTime) startTime = ts;
-    const elapsed  = ts - startTime;
-    const progress = Math.min(elapsed / durationMs, 1);
-    // ease-in-out cubic
-    const ease     = progress < 0.5
-      ? 4 * progress * progress * progress
-      : 1 - Math.pow(-2 * progress + 2, 3) / 2;
-
-    el.style.opacity = String(startOpacity + diff * ease);
-
-    if (progress < 1) {
-      activeTimers.set(el, requestAnimationFrame(step));
-    } else {
-      activeTimers.delete(el);
-      if (onDone) onDone();
+/* ── RESIZE CURVE ──────────────────────────────── */
+let rt;
+window.addEventListener('resize',()=>{
+  clearTimeout(rt);rt=setTimeout(()=>{
+    const w=document.getElementById('nc_curve_wrap');
+    if(w&&w.style.display!=='none'){
+      const mean=parseFloat(document.getElementById('nc_mean').value);
+      const sd=parseFloat(document.getElementById('nc_sd').value);
+      const x=parseFloat(document.getElementById('nc_x').value);
+      const type=document.getElementById('nc_type').value;
+      if(!isNaN(mean)&&!isNaN(sd)&&!isNaN(x))drawCurve((x-mean)/sd,type);
     }
-  }
-
-  activeTimers.set(el, requestAnimationFrame(step));
-}
-
-/* ═══════════════════════════════════════════
-   VOICE / TTS
-═══════════════════════════════════════════ */
-const synth    = window.speechSynthesis;
-const speechOK = !!synth;
-let voiceOn    = false;
-let pickedVoice = null;
-
-const ICON_ON  = `<path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>`;
-const ICON_OFF = `<path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>`;
-
-function pickVoice() {
-  const voices = synth.getVoices();
-  const prefs  = ['Google UK English Male','Microsoft George','Daniel','Arthur','Alex'];
-  for (const pref of prefs) {
-    const v = voices.find(v => v.name.includes(pref));
-    if (v) { pickedVoice = v; return; }
-  }
-  pickedVoice = voices.find(v => v.lang.startsWith('en-GB'))
-             || voices.find(v => v.lang.startsWith('en'))
-             || voices[0] || null;
-}
-if (speechOK) { pickVoice(); synth.onvoiceschanged = pickVoice; }
-
-function setVoiceIcon() {
-  vicon.innerHTML      = voiceOn ? ICON_ON : ICON_OFF;
-  voiceBtn.style.opacity = voiceOn ? '0.85' : '0.45';
-}
-setVoiceIcon();
-
-voiceBtn.addEventListener('click', e => {
-  e.stopPropagation();
-  if (!speechOK) return;
-  voiceOn = !voiceOn;
-  setVoiceIcon();
-  if (!voiceOn) synth.cancel();
+  },120);
 });
-
-function speak(text) {
-  if (!voiceOn || !speechOK) return;
-  synth.cancel();
-  const u    = new SpeechSynthesisUtterance(text);
-  u.rate     = 0.70;
-  u.pitch    = 0.85;
-  u.volume   = 0.92;
-  if (pickedVoice) u.voice = pickedVoice;
-  synth.speak(u);
-}
-
-/* ═══════════════════════════════════════════
-   SEQUENCER
-   Strictly sequential: fade-in → hold → fade-out → gap → next
-   Each stage waits for the previous to fully complete via callbacks.
-═══════════════════════════════════════════ */
-const FADE_IN_MS  = 2200;
-const FADE_OUT_MS = 2000;
-const GAP_MS      = 500;   // dark silence between stanzas
-
-let sequenceIndex = -1;
-
-function runStanza(index) {
-  if (index >= stanzas.length) {
-    // Done — fade in end screen
-    endScreen.style.opacity = '1';
-    return;
-  }
-
-  sequenceIndex = index;
-  const s  = stanzas[index];
-  const el = els[index];
-
-  // 1. Fade IN
-  fadeTo(el, 1, FADE_IN_MS, () => {
-    // 2. Speak once fully faded in
-    speak(s.voice);
-
-    // 3. Hold
-    const holdMs = s.hold + (s.linger ? 3500 : 0);
-    setTimeout(() => {
-
-      // 4. Fade OUT
-      fadeTo(el, 0, FADE_OUT_MS, () => {
-
-        // 5. Silent gap, then next
-        setTimeout(() => runStanza(index + 1), GAP_MS);
-
-      });
-    }, holdMs);
-  });
-
-  // Update progress
-  progressBar.style.width = ((index + 1) / stanzas.length * 100) + '%';
-}
-
-/* ═══════════════════════════════════════════
-   TITLE SEQUENCE then START
-═══════════════════════════════════════════ */
-let started = false;
-
-function begin() {
-  if (started) return;
-  started = true;
-  startPrompt.style.display = 'none';
-
-  // Fade out title screen
-  fadeTo(titleScreen, 0, 2800, () => {
-    titleScreen.style.display = 'none';
-    runStanza(0);
-  });
-}
-
-// Show title elements
-setTimeout(() => {
-  titleH1.style.opacity  = '1';
-  titleSub.style.opacity = '1';
-  startPrompt.style.opacity = '1';
-}, 200);
-
-document.addEventListener('click',      begin, { once: true });
-document.addEventListener('touchstart', begin, { once: true, passive: true });
-// Auto-start after 7s if no interaction
-setTimeout(() => { if (!started) begin(); }, 7000);
 </script>
 </body>
 </html>
