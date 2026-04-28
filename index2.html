@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>CIT — CPU Scheduling</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080a10;--surface:#0f111a;--card:#141720;--border:#1e2235;
+  --gold:#f0a840;--gold-dim:rgba(240,168,64,0.12);
+  --blue:#5b9cf6;--blue-dim:rgba(91,156,246,0.12);
+  --green:#5de8a8;--green-dim:rgba(93,232,168,0.12);
+  --red:#f06b6b;--red-dim:rgba(240,107,107,0.12);
+  --purple:#b07ef6;--purple-dim:rgba(176,126,246,0.12);
+  --text:#dde1f0;--muted:#606480;
+  --fs:'DM Sans',sans-serif;--fm:'DM Mono',monospace;--fd:'Syne',sans-serif;
+  --radius:14px;--nav-h:60px;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--fs);font-size:15px;line-height:1.65;min-height:100dvh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse 60% 40% at 15% 10%,rgba(240,168,64,0.055) 0%,transparent 60%),radial-gradient(ellipse 50% 30% at 85% 85%,rgba(91,156,246,0.045) 0%,transparent 60%);pointer-events:none}
+
+/* HEADER */
+header{position:sticky;top:0;z-index:200;height:var(--nav-h);display:flex;align-items:center;gap:14px;padding:0 clamp(14px,4vw,40px);background:rgba(8,10,16,0.9);backdrop-filter:blur(20px) saturate(1.4);border-bottom:1px solid var(--border)}
+.logo-badge{font-family:var(--fm);font-size:10px;letter-spacing:2px;font-weight:500;background:var(--gold);color:#000;padding:3px 10px;border-radius:4px;flex-shrink:0;white-space:nowrap}
+.logo-title{font-family:var(--fd);font-size:clamp(13px,2.5vw,18px);font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0}
+
+/* BOTTOM NAV */
+.tab-bar{position:fixed;bottom:0;left:0;right:0;z-index:200;display:flex;background:rgba(8,10,16,0.96);backdrop-filter:blur(20px);border-top:1px solid var(--border);padding-bottom:env(safe-area-inset-bottom,0px)}
+.tab-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:9px 2px 7px;border:none;background:transparent;color:var(--muted);cursor:pointer;font-family:var(--fm);font-size:8.5px;letter-spacing:.8px;transition:color .2s;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.tab-btn .icon{font-size:18px;line-height:1;transition:transform .2s}
+.tab-btn.active{color:var(--gold)}
+.tab-btn.active .icon{transform:scale(1.18)}
+
+@media(min-width:768px){
+  .tab-bar{position:static;background:transparent;border:none;padding:0;margin-left:auto;width:auto;flex-shrink:0;gap:3px}
+  .tab-btn{flex:none;flex-direction:row;gap:6px;padding:7px 15px;border-radius:8px;font-size:10px;border:1px solid transparent;white-space:nowrap}
+  .tab-btn .icon{font-size:13px}
+  .tab-btn:hover{background:var(--card);color:var(--text);border-color:var(--border)}
+  .tab-btn.active{background:var(--gold-dim);color:var(--gold);border-color:rgba(240,168,64,.3)}
+  .tab-btn.active .icon{transform:none}
+  .tab-bar-mobile{display:none}
+}
+
+main{position:relative;z-index:1;max-width:980px;margin:0 auto;padding:clamp(20px,4vw,44px) clamp(14px,3vw,26px);padding-bottom:calc(78px + env(safe-area-inset-bottom,0px))}
+@media(min-width:768px){main{padding-bottom:60px}}
+
+.section{display:none}
+.section.active{display:block;animation:rise .35s cubic-bezier(.22,.68,0,1.2)}
+@keyframes rise{from{opacity:0;transform:translateY(14px) scale(.99)}to{opacity:1;transform:translateY(0) scale(1)}}
+
+/* HERO */
+.hero{margin-bottom:clamp(22px,4vw,40px)}
+.hero-eyebrow{font-family:var(--fm);font-size:10px;letter-spacing:2.5px;color:var(--muted);margin-bottom:5px}
+.hero-title{font-family:var(--fd);font-weight:800;font-size:clamp(30px,7vw,52px);line-height:1.05;background:linear-gradient(130deg,var(--text) 30%,var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-sub{font-size:12.5px;color:var(--muted);font-family:var(--fm);letter-spacing:.5px;margin-top:5px}
+
+.grid-2{display:grid;gap:13px;grid-template-columns:1fr;margin-bottom:18px}
+@media(min-width:520px){.grid-2{grid-template-columns:1fr 1fr}}
+
+/* CONCEPT CARD */
+.concept-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:clamp(14px,3vw,20px);position:relative;overflow:hidden;transition:transform .2s,border-color .2s}
+.concept-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:var(--radius) var(--radius) 0 0}
+.concept-card:hover{transform:translateY(-2px)}
+.concept-card.gold{border-color:rgba(240,168,64,.22)}.concept-card.gold::before{background:var(--gold)}
+.concept-card.blue{border-color:rgba(91,156,246,.22)}.concept-card.blue::before{background:var(--blue)}
+.concept-card.green{border-color:rgba(93,232,168,.22)}.concept-card.green::before{background:var(--green)}
+.concept-card.red{border-color:rgba(240,107,107,.22)}.concept-card.red::before{background:var(--red)}
+.concept-card.purple{border-color:rgba(176,126,246,.22)}.concept-card.purple::before{background:var(--purple)}
+.chip{font-family:var(--fm);font-size:9px;letter-spacing:2px;font-weight:500;padding:2px 8px;border-radius:20px;display:inline-block;margin-bottom:9px}
+.concept-card.gold .chip{background:var(--gold-dim);color:var(--gold)}
+.concept-card.blue .chip{background:var(--blue-dim);color:var(--blue)}
+.concept-card.green .chip{background:var(--green-dim);color:var(--green)}
+.concept-card.red .chip{background:var(--red-dim);color:var(--red)}
+.concept-card.purple .chip{background:var(--purple-dim);color:var(--purple)}
+.concept-card h4{font-family:var(--fd);font-size:15px;font-weight:700;margin-bottom:6px}
+.concept-card p{font-size:13px;color:#9ca0b8;line-height:1.7}
+
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:clamp(16px,3vw,26px);margin-bottom:15px}
+.card h3{font-family:var(--fd);font-size:clamp(15px,3vw,19px);font-weight:800;color:var(--gold);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.card>p,.card>div>p{font-size:14px;color:#b0b5cc;line-height:1.75}
+
+.formula{background:rgba(240,168,64,.06);border:1px solid rgba(240,168,64,.18);border-left:3px solid var(--gold);border-radius:0 10px 10px 0;padding:12px 16px;margin:13px 0;font-family:var(--fm);font-size:clamp(12px,2.5vw,14px);color:var(--gold);overflow-x:auto;white-space:nowrap}
+
+.steps{display:flex;flex-direction:column;gap:9px}
+.step{display:flex;gap:13px;align-items:flex-start;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 15px;transition:border-color .2s}
+.step:hover{border-color:rgba(240,168,64,.2)}
+.step-num{min-width:25px;height:25px;background:var(--gold);color:#000;font-family:var(--fm);font-size:10px;font-weight:600;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
+.step-num.blue{background:var(--blue)}
+.step-num.green{background:var(--green)}
+.step p{font-size:13.5px;color:#b4b9d0}
+
+.table-wrap{overflow-x:auto;border-radius:10px;margin-top:13px;-webkit-overflow-scrolling:touch}
+.mini-table{width:100%;border-collapse:collapse;font-family:var(--fm);font-size:clamp(11px,1.8vw,12.5px);min-width:300px}
+.mini-table th{background:var(--surface);color:var(--muted);padding:9px 13px;text-align:left;border-bottom:1px solid var(--border);font-size:10px;letter-spacing:1.5px;font-weight:600;white-space:nowrap}
+.mini-table td{padding:9px 13px;border-bottom:1px solid rgba(30,34,53,.8);color:#a8adc6;vertical-align:top}
+.mini-table tr:last-child td{border-bottom:none}
+.mini-table td.emph{color:var(--gold);font-weight:600}
+.mini-table td.emph-blue{color:var(--blue);font-weight:600}
+.mini-table td.emph-green{color:var(--green);font-weight:600}
+.mini-table td.emph-red{color:var(--red);font-weight:600}
+.mini-table tr.total-row td{background:rgba(240,168,64,.06);color:var(--gold);font-weight:600;border-top:1px solid rgba(240,168,64,.2)}
+
+.divider{height:1px;background:var(--border);margin:18px 0}
+
+.accordion{margin-bottom:11px}
+.accordion summary{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:13px 17px;cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;font-family:var(--fd);font-size:clamp(13px,2.5vw,15px);font-weight:700;color:var(--text);transition:border-color .2s;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.accordion summary::-webkit-details-marker{display:none}
+.accordion summary::after{content:'▸';font-size:11px;color:var(--muted);transition:transform .2s;flex-shrink:0;margin-left:10px}
+.accordion[open] summary{border-radius:var(--radius) var(--radius) 0 0;border-color:rgba(240,168,64,.25);color:var(--gold)}
+.accordion[open] summary::after{transform:rotate(90deg);color:var(--gold)}
+.accordion-body{background:var(--card);border:1px solid rgba(240,168,64,.2);border-top:none;border-radius:0 0 var(--radius) var(--radius);padding:16px 18px}
+
+/* CALC BOX */
+.calc-box{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:clamp(16px,3vw,26px);margin-bottom:16px}
+.calc-box-header{display:flex;align-items:flex-start;gap:13px;margin-bottom:18px}
+.calc-box-icon{width:40px;height:40px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px}
+.calc-box-icon.gold{background:var(--gold-dim)}.calc-box-icon.blue{background:var(--blue-dim)}.calc-box-icon.green{background:var(--green-dim)}.calc-box-icon.purple{background:var(--purple-dim)}
+.calc-box-title{font-family:var(--fd);font-size:clamp(15px,3vw,18px);font-weight:800}
+.calc-box-sub{font-size:10.5px;color:var(--muted);font-family:var(--fm);letter-spacing:.8px;margin-top:2px}
+
+.input-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:11px;margin-bottom:14px}
+@media(min-width:480px){.input-grid{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:700px){.input-grid{grid-template-columns:repeat(auto-fill,minmax(135px,1fr))}}
+.input-group label{display:block;font-size:10px;font-family:var(--fm);letter-spacing:1.5px;font-weight:500;color:var(--muted);margin-bottom:5px}
+.input-group input,.input-group select{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:10px 11px;border-radius:9px;font-family:var(--fm);font-size:clamp(13px,2vw,14px);outline:none;transition:border-color .18s,box-shadow .18s;-webkit-appearance:none;appearance:none}
+.input-group input:focus,.input-group select:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(240,168,64,.1)}
+.input-group select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23606480' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 11px center;padding-right:30px;cursor:pointer}
+.input-group select option{background:var(--card)}
+
+/* Process rows for multi-process input */
+.process-rows{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.process-row{display:grid;gap:8px;grid-template-columns:60px 1fr 1fr 1fr;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:9px 12px}
+.process-row .proc-label{font-family:var(--fm);font-size:11px;font-weight:600;color:var(--gold)}
+.process-row input{width:100%;background:transparent;border:1px solid var(--border);color:var(--text);padding:7px 9px;border-radius:7px;font-family:var(--fm);font-size:13px;outline:none;transition:border-color .15s}
+.process-row input:focus{border-color:var(--gold)}
+.proc-header{display:grid;gap:8px;grid-template-columns:60px 1fr 1fr 1fr;padding:0 12px;margin-bottom:4px}
+.proc-header span{font-size:9.5px;font-family:var(--fm);letter-spacing:1.5px;color:var(--muted)}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:none;cursor:pointer;padding:11px 20px;border-radius:9px;font-family:var(--fm);font-size:11.5px;font-weight:500;letter-spacing:.8px;transition:transform .15s,opacity .15s,box-shadow .15s;-webkit-tap-highlight-color:transparent;touch-action:manipulation;width:100%;margin-top:4px}
+@media(min-width:480px){.btn{width:auto}}
+.btn:active{transform:scale(.97)}
+.btn.gold{background:var(--gold);color:#000}.btn.blue{background:var(--blue);color:#000}.btn.green{background:var(--green);color:#000}.btn.purple{background:var(--purple);color:#000}
+.btn:hover{opacity:.85;box-shadow:0 4px 18px rgba(0,0,0,.3)}
+
+.result-box{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;margin-top:14px;display:none}
+.result-box.visible{display:block;animation:rise .25s ease}
+.result-row{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:4px;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px}
+.result-row:last-child{border-bottom:none}
+.rkey{color:var(--muted);font-family:var(--fm);font-size:10.5px;flex-shrink:0;padding-right:8px;padding-top:2px}
+.rval{font-family:var(--fm);font-weight:600;color:var(--gold);word-break:break-all;text-align:right}
+
+/* TIMELINE */
+.timeline-wrap{overflow-x:auto;margin-top:14px;border-radius:10px;-webkit-overflow-scrolling:touch}
+.timeline{display:flex;height:52px;min-width:400px;position:relative;border-radius:8px;overflow:hidden}
+.tl-block{display:flex;align-items:center;justify-content:center;font-family:var(--fm);font-size:11px;font-weight:600;border-right:1px solid var(--bg);position:relative;flex-shrink:0;transition:opacity .2s}
+.tl-block span{pointer-events:none}
+.tl-times{display:flex;min-width:400px;padding-top:4px;position:relative}
+.tl-tick{position:absolute;font-family:var(--fm);font-size:9.5px;color:var(--muted);transform:translateX(-50%)}
+
+/* FORMULA GRID */
+.formula-grid{display:grid;gap:13px;grid-template-columns:1fr;margin-bottom:18px}
+@media(min-width:540px){.formula-grid{grid-template-columns:1fr 1fr}}
+@media(min-width:860px){.formula-grid{grid-template-columns:1fr 1fr 1fr}}
+.formula-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:17px 19px;transition:transform .2s,border-color .2s}
+.formula-card:hover{transform:translateY(-2px);border-color:rgba(240,168,64,.2)}
+.fc-label{font-family:var(--fm);font-size:9px;letter-spacing:2px;color:var(--muted);margin-bottom:7px}
+.fc-name{font-family:var(--fd);font-size:14px;font-weight:700;margin-bottom:11px}
+.fc-eq{background:rgba(240,168,64,.07);border:1px solid rgba(240,168,64,.15);border-radius:8px;padding:9px 13px;font-family:var(--fm);font-size:clamp(11.5px,2.2vw,13.5px);color:var(--gold);overflow-x:auto;white-space:nowrap;margin-bottom:9px}
+.fc-vars{font-size:11.5px;color:#7a7e96;line-height:1.85}
+
+/* QUIZ */
+.quiz-wrap{display:flex;flex-direction:column;gap:16px}
+.quiz-q-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:clamp(14px,3vw,22px);transition:border-color .2s}
+.quiz-q-num{font-family:var(--fm);font-size:9.5px;letter-spacing:2px;color:var(--muted);margin-bottom:7px}
+.quiz-q-text{font-size:14px;color:var(--text);line-height:1.7;margin-bottom:13px;font-weight:500}
+.quiz-opts{display:grid;gap:8px}
+@media(min-width:520px){.quiz-opts{grid-template-columns:1fr 1fr}}
+.quiz-opt{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:11px 13px;font-size:13px;cursor:pointer;text-align:left;color:var(--text);font-family:var(--fs);transition:all .18s;line-height:1.5;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.quiz-opt:hover:not(:disabled){border-color:var(--gold);color:var(--gold);background:var(--gold-dim)}
+.quiz-opt.correct{background:var(--green-dim);border-color:var(--green);color:var(--green)}
+.quiz-opt.wrong{background:var(--red-dim);border-color:var(--red);color:var(--red)}
+.quiz-opt:disabled{cursor:default}
+.quiz-feedback{margin-top:11px;font-size:12.5px;font-family:var(--fm);padding:10px 13px;border-radius:8px;display:none;line-height:1.6}
+.quiz-feedback.show{display:block;animation:rise .2s ease}
+.quiz-feedback.ok{background:var(--green-dim);color:var(--green)}
+.quiz-feedback.bad{background:var(--red-dim);color:var(--red)}
+.quiz-score{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px 24px;text-align:center;display:none;margin-bottom:18px}
+.quiz-score.show{display:block;animation:rise .3s ease}
+.quiz-score-num{font-family:var(--fd);font-size:48px;font-weight:800;color:var(--gold)}
+.quiz-score-label{font-family:var(--fm);font-size:10px;letter-spacing:2px;color:var(--muted);margin-top:4px}
+
+/* COLOR PALETTE for process blocks */
+.c0{background:#f0a840;color:#000}
+.c1{background:#5b9cf6;color:#000}
+.c2{background:#5de8a8;color:#000}
+.c3{background:#f06b6b;color:#fff}
+.c4{background:#b07ef6;color:#fff}
+.c5{background:#f0d040;color:#000}
+.c6{background:#40d0f0;color:#000}
+.c7{background:#f08080;color:#fff}
+
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--surface)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+.pill{display:inline-flex;align-items:center;font-size:11px;font-family:var(--fm);font-weight:500;padding:2px 10px;border-radius:20px;margin:2px}
+.pill.gold{background:var(--gold-dim);color:var(--gold);border:1px solid rgba(240,168,64,.25)}
+.pill.blue{background:var(--blue-dim);color:var(--blue);border:1px solid rgba(91,156,246,.25)}
+.pill.green{background:var(--green-dim);color:var(--green);border:1px solid rgba(93,232,168,.25)}
+.pill.red{background:var(--red-dim);color:var(--red);border:1px solid rgba(240,107,107,.25)}
+
+.tip-box{background:rgba(93,232,168,.07);border:1px solid rgba(93,232,168,.2);border-left:3px solid var(--green);border-radius:0 10px 10px 0;padding:12px 16px;margin:13px 0;font-size:13px;color:#9ecfb8;line-height:1.7}
+.tip-box strong{color:var(--green)}
+
+.warn-box{background:rgba(240,168,64,.07);border:1px solid rgba(240,168,64,.2);border-left:3px solid var(--gold);border-radius:0 10px 10px 0;padding:12px 16px;margin:13px 0;font-size:13px;color:#c9ad7a;line-height:1.7}
+.warn-box strong{color:var(--gold)}
+
+.result-table{width:100%;border-collapse:collapse;font-family:var(--fm);font-size:12px;margin-top:10px}
+.result-table th{background:var(--surface);color:var(--muted);padding:8px 10px;text-align:left;border-bottom:1px solid var(--border);font-size:10px;letter-spacing:1.2px}
+.result-table td{padding:8px 10px;border-bottom:1px solid rgba(30,34,53,.8);color:#a8adc6}
+.result-table tr:last-child td{border-bottom:none}
+.result-table td.hi{color:var(--gold);font-weight:600}
+.avg-row{background:rgba(240,168,64,.06);font-weight:600}
+.avg-row td{color:var(--gold) !important;border-top:1px solid rgba(240,168,64,.25) !important}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-badge">MOD 5</div>
+  <div class="logo-title">CPU Scheduling — Interactive Reviewer</div>
+  <nav class="tab-bar" id="desktopNav">
+    <button class="tab-btn active" onclick="showTab('priority',0)"><span class="icon">⚡</span>Priority</button>
+    <button class="tab-btn" onclick="showTab('roundrobin',1)"><span class="icon">🔄</span>Round Robin</button>
+    <button class="tab-btn" onclick="showTab('formulas',2)"><span class="icon">📐</span>Formulas</button>
+    <button class="tab-btn" onclick="showTab('calculator',3)"><span class="icon">🧮</span>Calculator</button>
+    <button class="tab-btn" onclick="showTab('quiz',4)"><span class="icon">✏️</span>Quiz</button>
+  </nav>
+</header>
+
+<nav class="tab-bar tab-bar-mobile" id="mobileNav">
+  <button class="tab-btn active" onclick="showTab('priority',0)"><span class="icon">⚡</span>Priority</button>
+  <button class="tab-btn" onclick="showTab('roundrobin',1)"><span class="icon">🔄</span>RR</button>
+  <button class="tab-btn" onclick="showTab('formulas',2)"><span class="icon">📐</span>Forms</button>
+  <button class="tab-btn" onclick="showTab('calculator',3)"><span class="icon">🧮</span>Calc</button>
+  <button class="tab-btn" onclick="showTab('quiz',4)"><span class="icon">✏️</span>Quiz</button>
+</nav>
+
+<main>
+
+<!-- ═══════ PRIORITY ═══════ -->
+<div id="priority" class="section active">
+  <div class="hero">
+    <div class="hero-eyebrow">TOPIC 01</div>
+    <div class="hero-title">Priority Scheduling</div>
+    <div class="hero-sub">PREEMPTIVE · NON-PREEMPTIVE · STARVATION · TIPS & TRICKS</div>
+  </div>
+
+  <div class="grid-2">
+    <div class="concept-card gold"><div class="chip">NON-PREEMPTIVE</div><h4>No Interruptions</h4><p>Once a process starts, it runs to completion. A higher-priority arrival waits until the CPU is free.</p></div>
+    <div class="concept-card blue"><div class="chip">PREEMPTIVE</div><h4>Higher Priority Kicks Out</h4><p>A new process with higher priority (lower number) immediately takes the CPU. The interrupted process resumes later from where it stopped.</p></div>
+    <div class="concept-card red"><div class="chip">STARVATION</div><h4>Low-Priority Processes Wait Forever</h4><p>If high-priority jobs keep arriving, low-priority ones may never execute. This is the main disadvantage of priority scheduling.</p></div>
+    <div class="concept-card green"><div class="chip">PRIORITY RULE</div><h4>Lower Number = Higher Priority</h4><p>Priority 1 beats Priority 2. The CPU always goes to the process with the smallest priority number currently ready.</p></div>
+  </div>
+
+  <div class="card">
+    <h3>⚡ Priority Assignment Methods</h3>
+    <p>The processor manager can assign priorities based on any of these factors:</p>
+    <div class="table-wrap"><table class="mini-table">
+      <thead><tr><th>Factor</th><th>Rule</th></tr></thead>
+      <tbody>
+        <tr><td>Memory requirements</td><td class="emph">Large memory → Lower priority</td></tr>
+        <tr><td>Peripheral devices needed</td><td class="emph">Many peripherals → Lower priority</td></tr>
+        <tr><td>Total CPU time</td><td class="emph">Long CPU cycle → Lower priority</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="card">
+    <h3>🧠 How to Solve — Non-Preemptive Priority</h3>
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><p><strong>At time 0 (or when CPU is free)</strong> — look at all processes that have arrived. Pick the one with the lowest priority number.</p></div>
+      <div class="step"><div class="step-num">2</div><p><strong>Run it to completion.</strong> Don't interrupt for any reason, even if a higher-priority process arrives mid-execution.</p></div>
+      <div class="step"><div class="step-num">3</div><p><strong>When it finishes</strong> — from all currently-arrived processes, again pick the lowest priority number.</p></div>
+      <div class="step"><div class="step-num">4</div><p><strong>If CPU is idle</strong> (no process has arrived yet) — fast-forward time to the next arrival.</p></div>
+      <div class="step"><div class="step-num">5</div><p><strong>Calculate:</strong> Completion Time (CT) → Turnaround = CT − Arrival → Waiting = Turnaround − Burst.</p></div>
+    </div>
+    <div class="tip-box" style="margin-top:13px"><strong>💡 Trick:</strong> Draw the Gantt chart first, fill the table after. It's much easier to spot idle gaps and process order visually.</div>
+  </div>
+
+  <div class="card">
+    <h3>⚡ How to Solve — Preemptive Priority</h3>
+    <div class="steps">
+      <div class="step"><div class="step-num blue">1</div><p><strong>Track remaining burst time</strong> for every process — subtract however long it ran before being interrupted.</p></div>
+      <div class="step"><div class="step-num blue">2</div><p><strong>At every arrival event</strong> — pause and compare the new process's priority with the current runner. If lower number → preempt.</p></div>
+      <div class="step"><div class="step-num blue">3</div><p><strong>Only re-check at arrival times</strong>, not every millisecond. Events occur only when a new process arrives or the current one finishes.</p></div>
+      <div class="step"><div class="step-num blue">4</div><p><strong>Track remaining burst</strong> in slash notation: e.g., <span style="color:var(--gold);font-family:var(--fm)">P2: 3/1/0</span> means started with 3, had 1 left after preemption, then finished.</p></div>
+      <div class="step"><div class="step-num blue">5</div><p><strong>Calculate same formulas:</strong> CT → Turnaround = CT − Arrival → Waiting = Turnaround − Burst.</p></div>
+    </div>
+    <div class="tip-box" style="margin-top:13px"><strong>💡 Trick:</strong> Make a mini "event table" listing every arrival time. At each event, write down who is currently running and whether the newcomer can kick them out.</div>
+  </div>
+
+  <details class="accordion">
+    <summary>📘 Worked Example: Non-Preemptive Priority</summary>
+    <div class="accordion-body">
+      <p style="color:#9ca0b8;font-size:14px;margin-bottom:13px">P1(pri=1,arr=0,burst=4) · P2(pri=2,arr=0,burst=3) · P3(pri=1,arr=6,burst=7) · P4(pri=3,arr=11,burst=4) · P5(pri=2,arr=12,burst=2)</p>
+      <div class="warn-box"><strong>Step-by-step logic:</strong><br>
+        t=0: P1 &amp; P2 arrive. P1 wins (pri=1 &lt; 2). Runs 0→4.<br>
+        t=4: Only P2 is ready. P2 runs 4→7.<br>
+        t=6: P3 arrives but P2 is already running (Non-Preemptive). P2 finishes first.<br>
+        t=7: P3 ready (pri=1). Runs 7→14.<br>
+        t=14: P4(pri=3) &amp; P5(pri=2) both arrived. P5 wins. Runs 14→16.<br>
+        t=16: P4 runs 16→20.
+      </div>
+      <div class="table-wrap"><table class="mini-table">
+        <thead><tr><th>Process</th><th>Priority</th><th>Arrival</th><th>Burst</th><th>Completion</th><th>Turnaround</th><th>Waiting</th></tr></thead>
+        <tbody>
+          <tr><td>P1</td><td>1</td><td>0</td><td>4</td><td class="emph">4</td><td>4</td><td>0</td></tr>
+          <tr><td>P2</td><td>2</td><td>0</td><td>3</td><td class="emph">7</td><td>7</td><td>4</td></tr>
+          <tr><td>P3</td><td>1</td><td>6</td><td>7</td><td class="emph">14</td><td>8</td><td>1</td></tr>
+          <tr><td>P4</td><td>3</td><td>11</td><td>4</td><td class="emph">20</td><td>9</td><td>5</td></tr>
+          <tr><td>P5</td><td>2</td><td>12</td><td>2</td><td class="emph">16</td><td>4</td><td>2</td></tr>
+          <tr class="total-row"><td colspan="5">Averages</td><td>6.4</td><td>2.4</td></tr>
+        </tbody>
+      </table></div>
+      <p style="font-size:12px;color:var(--muted);margin-top:10px">Timeline: <span style="font-family:var(--fm);color:var(--gold)">P1[0→4] | P2[4→7] | P3[7→14] | P5[14→16] | P4[16→20]</span></p>
+    </div>
+  </details>
+
+  <details class="accordion">
+    <summary>📘 Worked Example: Preemptive Priority</summary>
+    <div class="accordion-body">
+      <p style="color:#9ca0b8;font-size:14px;margin-bottom:13px">Same processes — but now higher priority can preempt.</p>
+      <div class="warn-box"><strong>Step-by-step logic:</strong><br>
+        t=0: P1 &amp; P2 arrive. P1 runs (pri=1).<br>
+        t=4: P1 finishes. P2 runs (only one ready).<br>
+        t=6: P3 arrives (pri=1) — same as P1, lower number than P2(pri=2). P3 <strong>preempts P2</strong>. P2 remaining = 1.<br>
+        t=13: P3 finishes. P2 resumes (1 unit left), runs 13→14.<br>
+        t=14: P5(pri=2) &amp; P4(pri=3) both waiting. P5 wins. Runs 14→16.<br>
+        t=16: P4 runs 16→20.
+      </div>
+      <div class="table-wrap"><table class="mini-table">
+        <thead><tr><th>Process</th><th>Priority</th><th>Arrival</th><th>Burst</th><th>Remaining</th><th>Completion</th><th>TAT</th><th>WT</th></tr></thead>
+        <tbody>
+          <tr><td>P1</td><td>1</td><td>0</td><td>4</td><td class="emph">4/0</td><td>4</td><td>4</td><td>0</td></tr>
+          <tr><td>P2</td><td>2</td><td>0</td><td>3</td><td class="emph">3/1/0</td><td>14</td><td>14</td><td>11</td></tr>
+          <tr><td>P3</td><td>1</td><td>6</td><td>7</td><td class="emph">7/0</td><td>13</td><td>7</td><td>0</td></tr>
+          <tr><td>P4</td><td>3</td><td>11</td><td>4</td><td class="emph">4/0</td><td>20</td><td>9</td><td>5</td></tr>
+          <tr><td>P5</td><td>2</td><td>12</td><td>2</td><td class="emph">2/0</td><td>16</td><td>4</td><td>2</td></tr>
+          <tr class="total-row"><td colspan="6">Averages</td><td>7.6</td><td>3.6</td></tr>
+        </tbody>
+      </table></div>
+      <p style="font-size:12px;color:var(--muted);margin-top:10px">Timeline: <span style="font-family:var(--fm);color:var(--gold)">P1[0→4] | P2[4→6] | P3[6→13] | P2[13→14] | P5[14→16] | P4[16→20]</span></p>
+    </div>
+  </details>
+
+  <div class="card" style="margin-top:15px">
+    <h3>⚡ Quick Comparison Cheat Sheet</h3>
+    <div class="table-wrap"><table class="mini-table">
+      <thead><tr><th>Feature</th><th>Non-Preemptive</th><th>Preemptive</th></tr></thead>
+      <tbody>
+        <tr><td>Interrupted mid-run?</td><td class="emph-green">Never</td><td class="emph-red">Yes, if higher priority arrives</td></tr>
+        <tr><td>Higher Avg. Waiting Time?</td><td class="emph-green">Usually lower</td><td class="emph-red">Usually higher (preempted processes wait longer)</td></tr>
+        <tr><td>Remaining burst tracked?</td><td class="emph-green">No — runs full burst</td><td class="emph-red">Yes — slash notation P2: 3/1/0</td></tr>
+        <tr><td>Re-check at arrivals?</td><td class="emph-green">Only when CPU is free</td><td class="emph-red">At every arrival event</td></tr>
+        <tr><td>Starvation possible?</td><td colspan="2" style="text-align:center">Yes for both — low-priority may never run</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- ═══════ ROUND ROBIN ═══════ -->
+<div id="roundrobin" class="section">
+  <div class="hero">
+    <div class="hero-eyebrow">TOPIC 02</div>
+    <div class="hero-title">Round Robin</div>
+    <div class="hero-sub">TIME QUANTUM · PREEMPTIVE · FAIR · STARVATION-FREE</div>
+  </div>
+
+  <div class="grid-2">
+    <div class="concept-card gold"><div class="chip">TIME QUANTUM</div><h4>Equal Time Slices</h4><p>Each process gets a fixed time quantum (e.g., 15ms, 20ms). After the quantum expires, the process goes to the back of the queue.</p></div>
+    <div class="concept-card blue"><div class="chip">ALWAYS PREEMPTIVE</div><h4>Timer Kicks Everyone Out</h4><p>Even if a process hasn't finished, it's preempted when the quantum expires. The OS then picks the next process in the ready queue.</p></div>
+    <div class="concept-card green"><div class="chip">NO STARVATION</div><h4>Everyone Gets a Turn</h4><p>Unlike priority scheduling, every process cycles through the queue. No process can monopolize the CPU indefinitely.</p></div>
+    <div class="concept-card purple"><div class="chip">PCB SAVES STATE</div><h4>Process Control Block</h4><p>When a process is preempted, its state (registers, remaining burst) is saved in its PCB so it can resume correctly next round.</p></div>
+  </div>
+
+  <div class="card">
+    <h3>🔄 How to Solve Round Robin — Step by Step</h3>
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><p><strong>Make a remaining-burst column.</strong> Start with each process's full burst time (e.g., 70/50/30… as you subtract each round).</p></div>
+      <div class="step"><div class="step-num">2</div><p><strong>Maintain a ready queue.</strong> Initially, add processes in arrival order. When a process arrives during a quantum, it joins the queue at that point.</p></div>
+      <div class="step"><div class="step-num">3</div><p><strong>Each round:</strong> Run the front-of-queue process for <em>min(remaining, quantum)</em>. If it finishes early, it's done; otherwise subtract quantum and move it to the back.</p></div>
+      <div class="step"><div class="step-num">4</div><p><strong>New arrivals during a quantum</strong> join the queue <em>before</em> the just-preempted process goes back. Arrival order determines position.</p></div>
+      <div class="step"><div class="step-num">5</div><p><strong>Calculate:</strong> Completion Time (when remaining = 0) → Turnaround = CT − Arrival → Waiting = Turnaround − Burst.</p></div>
+    </div>
+    <div class="tip-box" style="margin-top:13px"><strong>💡 Key Trick — Quantum vs Remaining:</strong> If remaining burst &lt; quantum, the process uses only the remaining time and finishes. Don't blindly subtract the full quantum!</div>
+    <div class="warn-box" style="margin-top:10px"><strong>⚠️ Quantum Size Warning:</strong><br>
+      Too large → degenerates into FCFS (processes finish before quantum).<br>
+      Too small → too much context switching, system slows down.<br>
+      Ideal: quantum long enough for 80% of CPU cycles to complete.
+    </div>
+  </div>
+
+  <details class="accordion">
+    <summary>📘 Worked Example: Same Arrival Time (Q=20)</summary>
+    <div class="accordion-body">
+      <p style="color:#9ca0b8;font-size:14px;margin-bottom:13px">P1=70, P2=50, P3=30, P4=10, P5=20, P6=10. All arrive at t=0. Quantum=20.</p>
+      <div class="warn-box">
+        Queue order: P1→P2→P3→P4→P5→P6 (arrival order)<br>
+        Round 1: P1(70→50), P2(50→30), P3(30→10), P4(10→0✅ at t=70), P5(20→0✅ at t=90), P6(10→0✅ at t=100)<br>
+        Round 2: P1(50→30), P2(30→10), P3(10→0✅ at t=150)<br>
+        Round 3: P1(30→10), P2(10→0✅ at t=180)<br>
+        Round 4: P1(10→0✅ at t=190)
+      </div>
+      <div class="table-wrap"><table class="mini-table">
+        <thead><tr><th>Process</th><th>Burst</th><th>Completion</th><th>Turnaround</th><th>Waiting</th></tr></thead>
+        <tbody>
+          <tr><td>P1</td><td>70</td><td class="emph">190</td><td>190</td><td>120</td></tr>
+          <tr><td>P2</td><td>50</td><td class="emph">180</td><td>180</td><td>130</td></tr>
+          <tr><td>P3</td><td>30</td><td class="emph">150</td><td>150</td><td>120</td></tr>
+          <tr><td>P4</td><td>10</td><td class="emph">70</td><td>70</td><td>60</td></tr>
+          <tr><td>P5</td><td>20</td><td class="emph">90</td><td>90</td><td>70</td></tr>
+          <tr><td>P6</td><td>10</td><td class="emph">100</td><td>100</td><td>90</td></tr>
+          <tr class="total-row"><td colspan="3">Averages</td><td>130</td><td>98.33</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+  </details>
+
+  <details class="accordion">
+    <summary>📘 Worked Example: Different Arrival Times (Q=20)</summary>
+    <div class="accordion-body">
+      <p style="color:#9ca0b8;font-size:14px;margin-bottom:13px">P1(arr=0,burst=70) · P2(arr=10,burst=50) · P3(arr=20,burst=30) · P4(arr=30,burst=10) · P5(arr=40,burst=20) · P6(arr=50,burst=10). Q=20.</p>
+      <div class="warn-box">
+        t=0: P1 starts. P2 arrives at 10, P3 at 20 (both join queue).<br>
+        t=20: P1 preempted (50 left). Queue now: P2, P3, P1. P4 &amp; P5 arrive by t=40.<br>
+        Key: <strong>newly arrived processes join BEFORE the preempted process at the end of each slice.</strong>
+      </div>
+      <div class="table-wrap"><table class="mini-table">
+        <thead><tr><th>Process</th><th>Arrival</th><th>Burst</th><th>Completion</th><th>Turnaround</th><th>Waiting</th></tr></thead>
+        <tbody>
+          <tr><td>P1</td><td>0</td><td>70</td><td class="emph">190</td><td>190</td><td>120</td></tr>
+          <tr><td>P2</td><td>10</td><td>50</td><td class="emph">180</td><td>170</td><td>120</td></tr>
+          <tr><td>P3</td><td>20</td><td>30</td><td class="emph">150</td><td>130</td><td>100</td></tr>
+          <tr><td>P4</td><td>30</td><td>10</td><td class="emph">90</td><td>60</td><td>50</td></tr>
+          <tr><td>P5</td><td>40</td><td>20</td><td class="emph">110</td><td>70</td><td>50</td></tr>
+          <tr><td>P6</td><td>50</td><td>10</td><td class="emph">140</td><td>90</td><td>80</td></tr>
+          <tr class="total-row"><td colspan="4">Averages</td><td>118.33</td><td>86.67</td></tr>
+        </tbody>
+      </table></div>
+      <p style="font-size:12px;color:var(--muted);margin-top:10px">Timeline: <span style="font-family:var(--fm);color:var(--gold)">P1[0-20] P2[20-40] P3[40-60] P1[60-80] P4[80-90] P5[90-110] P2[110-130] P6[130-140] P3[140-150] P1[150-170] P2[170-180] P1[180-190]</span></p>
+    </div>
+  </details>
+</div>
+
+<!-- ═══════ FORMULAS ═══════ -->
+<div id="formulas" class="section">
+  <div class="hero">
+    <div class="hero-eyebrow">REFERENCE</div>
+    <div class="hero-title">Formula Sheet</div>
+    <div class="hero-sub">ALL KEY FORMULAS FOR CPU SCHEDULING</div>
+  </div>
+
+  <div class="formula-grid">
+    <div class="formula-card"><div class="fc-label">TURNAROUND TIME</div><div class="fc-name">Total Time in System</div><div class="fc-eq">TAT = CT − Arrival Time</div><div class="fc-vars">CT = when process fully completes<br>Arrival = when it entered the system</div></div>
+    <div class="formula-card"><div class="fc-label">WAITING TIME</div><div class="fc-name">Time Spent Waiting</div><div class="fc-eq">WT = TAT − Burst Time</div><div class="fc-vars">TAT = turnaround time<br>Burst = actual CPU time needed</div></div>
+    <div class="formula-card"><div class="fc-label">AVERAGE TAT</div><div class="fc-name">Mean Turnaround</div><div class="fc-eq">Avg TAT = Σ TAT / n</div><div class="fc-vars">Sum all turnaround times<br>Divide by number of processes</div></div>
+    <div class="formula-card"><div class="fc-label">AVERAGE WAITING</div><div class="fc-name">Mean Waiting Time</div><div class="fc-eq">Avg WT = Σ WT / n</div><div class="fc-vars">Sum all waiting times<br>Divide by number of processes</div></div>
+    <div class="formula-card"><div class="fc-label">ROUND ROBIN — RUN TIME</div><div class="fc-name">Each Slice Duration</div><div class="fc-eq">Run = min(Remaining, Quantum)</div><div class="fc-vars">If remaining &lt; quantum<br>→ process finishes early</div></div>
+    <div class="formula-card"><div class="fc-label">PREEMPTIVE PRIORITY</div><div class="fc-name">Remaining Burst After Interrupt</div><div class="fc-eq">Remaining = Burst − Time Run</div><div class="fc-vars">Track per-interrupt in slash notation<br>e.g., P2: 3 / 1 / 0</div></div>
+    <div class="formula-card"><div class="fc-label">CPU IDLE TIME</div><div class="fc-name">Gap Before Next Arrival</div><div class="fc-eq">Idle = Next Arrival − Current Time</div><div class="fc-vars">Occurs when ready queue is empty<br>and next process hasn't arrived yet</div></div>
+    <div class="formula-card"><div class="fc-label">COMPLETION TIME</div><div class="fc-name">When Process Finishes</div><div class="fc-eq">CT = Start Time + Burst Time</div><div class="fc-vars">Or last time it ran + remaining burst<br>in preemptive/RR cases</div></div>
+  </div>
+
+  <div class="card">
+    <h3>📊 Algorithm Comparison Table</h3>
+    <div class="table-wrap"><table class="mini-table">
+      <thead><tr><th>Algorithm</th><th>Policy</th><th>Starvation?</th><th>Disadvantage</th><th>Advantage</th></tr></thead>
+      <tbody>
+        <tr><td>FCFS</td><td>Non-Preemptive</td><td class="emph-green">No</td><td>Unpredictable TAT</td><td>Easy to implement</td></tr>
+        <tr><td>SJN / SJF</td><td>Non-Preemptive</td><td class="emph-red">Yes</td><td>Needs burst time in advance</td><td>Minimizes avg waiting time</td></tr>
+        <tr><td>SRT</td><td>Preemptive</td><td class="emph-red">Yes</td><td>Context switch overhead</td><td>Fast completion for short jobs</td></tr>
+        <tr><td>Priority (Non-P)</td><td>Non-Preemptive</td><td class="emph-red">Yes</td><td>Low-priority may never run</td><td>Important jobs finish fast</td></tr>
+        <tr><td>Priority (Preemptive)</td><td>Preemptive</td><td class="emph-red">Yes</td><td>High overhead; complex tracking</td><td>Critical processes get CPU immediately</td></tr>
+        <tr><td>Round Robin</td><td>Preemptive</td><td class="emph-green">No</td><td>Needs good quantum selection</td><td>Fair; good for interactive systems</td></tr>
+        <tr><td>Multiple-Level Queues</td><td>Both</td><td class="emph-red">Possible</td><td>Queue monitoring overhead</td><td>Flexible; counters starvation via aging</td></tr>
+        <tr><td>Earliest Deadline First</td><td>Preemptive</td><td class="emph-red">Possible</td><td>High overhead; unpredictable</td><td>Timely completion of real-time jobs</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- ═══════ CALCULATOR ═══════ -->
+<div id="calculator" class="section">
+  <div class="hero">
+    <div class="hero-eyebrow">TOOL</div>
+    <div class="hero-title">Live Calculator</div>
+    <div class="hero-sub">PRIORITY SCHEDULING · ROUND ROBIN · AUTO GANTT CHART</div>
+  </div>
+
+  <!-- PRIORITY CALCULATOR -->
+  <div class="calc-box">
+    <div class="calc-box-header"><div class="calc-box-icon gold">⚡</div><div><div class="calc-box-title">Priority Scheduling Calculator</div><div class="calc-box-sub">NON-PREEMPTIVE OR PREEMPTIVE · UP TO 7 PROCESSES</div></div></div>
+
+    <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+      <div class="input-group" style="flex:1;min-width:140px"><label>NUMBER OF PROCESSES</label>
+        <select id="p_count" onchange="buildPriorityRows()">
+          <option value="3">3 processes</option>
+          <option value="4">4 processes</option>
+          <option value="5" selected>5 processes</option>
+          <option value="6">6 processes</option>
+          <option value="7">7 processes</option>
+        </select>
+      </div>
+      <div class="input-group" style="flex:1;min-width:140px"><label>MODE</label>
+        <select id="p_mode">
+          <option value="nonpreemptive">Non-Preemptive</option>
+          <option value="preemptive">Preemptive</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="proc-header"><span>PROCESS</span><span>PRIORITY</span><span>ARRIVAL</span><span>BURST</span></div>
+    <div class="process-rows" id="priority_rows"></div>
+
+    <button class="btn gold" onclick="calcPriority()">▶ COMPUTE PRIORITY</button>
+    <div class="result-box" id="p_result"></div>
+  </div>
+
+  <!-- ROUND ROBIN CALCULATOR -->
+  <div class="calc-box">
+    <div class="calc-box-header"><div class="calc-box-icon blue">🔄</div><div><div class="calc-box-title">Round Robin Calculator</div><div class="calc-box-sub">AUTO QUEUE · GANTT CHART · UP TO 7 PROCESSES</div></div></div>
+
+    <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+      <div class="input-group" style="flex:1;min-width:140px"><label>NUMBER OF PROCESSES</label>
+        <select id="rr_count" onchange="buildRRRows()">
+          <option value="3">3 processes</option>
+          <option value="4">4 processes</option>
+          <option value="5" selected>5 processes</option>
+          <option value="6">6 processes</option>
+          <option value="7">7 processes</option>
+        </select>
+      </div>
+      <div class="input-group" style="flex:1;min-width:140px"><label>TIME QUANTUM</label>
+        <input type="number" id="rr_quantum" value="20" min="1">
+      </div>
+    </div>
+
+    <div class="proc-header" id="rr_header"><span>PROCESS</span><span>ARRIVAL</span><span>BURST</span><span></span></div>
+    <div class="process-rows" id="rr_rows"></div>
+
+    <button class="btn blue" onclick="calcRR()">▶ COMPUTE ROUND ROBIN</button>
+    <div class="result-box" id="rr_result"></div>
+  </div>
+</div>
+
+<!-- ═══════ QUIZ ═══════ -->
+<div id="quiz" class="section">
+  <div class="hero">
+    <div class="hero-eyebrow">PRACTICE</div>
+    <div class="hero-title">Quiz</div>
+    <div class="hero-sub">10 QUESTIONS · TAP TO CHECK YOUR ANSWER</div>
+  </div>
+  <div class="quiz-score" id="quiz_score"><div class="quiz-score-num" id="quiz_score_num">0/10</div><div class="quiz-score-label">FINAL SCORE</div></div>
+  <div class="quiz-wrap" id="quiz-container"></div>
+  <button class="btn gold" style="margin-top:10px;width:100%" onclick="resetQuiz()">↺ RESET QUIZ</button>
+</div>
+
+</main>
+
+<script>
+/* ── TAB SWITCHING ─────────────────────────────── */
+function showTab(id,idx){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  ['desktopNav','mobileNav'].forEach(navId=>{
+    const nav=document.getElementById(navId);if(!nav)return;
+    nav.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',i===idx));
+  });
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* ── BUILD PROCESS ROWS ─────────────────────────── */
+const COLORS=['c0','c1','c2','c3','c4','c5','c6'];
+const DEF_PRIORITY=[
+  [1,0,4],[2,0,3],[1,6,7],[3,11,4],[2,12,2],[10,5,4],[4,6,6]
+];
+const DEF_RR=[
+  [0,70],[10,50],[20,30],[30,10],[40,20],[50,10],[60,15]
+];
+
+function buildPriorityRows(){
+  const n=parseInt(document.getElementById('p_count').value);
+  const wrap=document.getElementById('priority_rows');
+  wrap.innerHTML='';
+  for(let i=0;i<n;i++){
+    const d=DEF_PRIORITY[i]||[1,0,5];
+    wrap.innerHTML+=`<div class="process-row">
+      <div class="proc-label">P${i+1}</div>
+      <input type="number" id="pp_${i}" value="${d[0]}" min="1" placeholder="Priority">
+      <input type="number" id="pa_${i}" value="${d[1]}" min="0" placeholder="Arrival">
+      <input type="number" id="pb_${i}" value="${d[2]}" min="1" placeholder="Burst">
+    </div>`;
+  }
+}
+
+function buildRRRows(){
+  const n=parseInt(document.getElementById('rr_count').value);
+  const wrap=document.getElementById('rr_rows');
+  wrap.innerHTML='';
+  document.getElementById('rr_header').innerHTML='<span>PROCESS</span><span>ARRIVAL</span><span>BURST</span><span></span>';
+  for(let i=0;i<n;i++){
+    const d=DEF_RR[i]||[i*10,30];
+    wrap.innerHTML+=`<div class="process-row">
+      <div class="proc-label">P${i+1}</div>
+      <input type="number" id="ra_${i}" value="${d[0]}" min="0" placeholder="Arrival">
+      <input type="number" id="rb_${i}" value="${d[1]}" min="1" placeholder="Burst">
+      <div></div>
+    </div>`;
+  }
+}
+
+buildPriorityRows();
+buildRRRows();
+
+/* ── RENDER GANTT CHART ─────────────────────────── */
+function renderGantt(segments, totalTime){
+  // segments: [{name, start, end, colorIdx}]
+  const scale = Math.max(totalTime, 1);
+  let tlHTML = '';
+  let tickHTML = '';
+  
+  segments.forEach(seg=>{
+    const w = ((seg.end - seg.start) / scale * 100).toFixed(2);
+    const label = seg.end - seg.start > (scale * 0.04) ? seg.name : '';
+    tlHTML += `<div class="tl-block ${COLORS[seg.colorIdx % 7]}" style="width:${w}%;min-width:${label?'28px':'4px'}" title="${seg.name}: ${seg.start}→${seg.end}"><span>${label}</span></div>`;
+  });
+
+  // Show tick marks
+  const ticks = new Set();
+  segments.forEach(s=>{ticks.add(s.start);ticks.add(s.end)});
+  [...ticks].sort((a,b)=>a-b).forEach(t=>{
+    const left = (t / scale * 100).toFixed(2);
+    tickHTML += `<div class="tl-tick" style="left:${left}%">${t}</div>`;
+  });
+
+  return `
+    <div style="margin-top:14px">
+      <div style="font-family:var(--fm);font-size:9.5px;letter-spacing:1.5px;color:var(--muted);margin-bottom:6px">GANTT CHART</div>
+      <div class="timeline-wrap">
+        <div class="timeline">${tlHTML}</div>
+        <div class="tl-times" style="position:relative;height:22px;min-width:400px">${tickHTML}</div>
+      </div>
+    </div>`;
+}
+
+/* ── PRIORITY SCHEDULING ─────────────────────────── */
+function calcPriority(){
+  const n=parseInt(document.getElementById('p_count').value);
+  const mode=document.getElementById('p_mode').value;
+  
+  let procs=[];
+  for(let i=0;i<n;i++){
+    procs.push({
+      name:`P${i+1}`,
+      priority:parseInt(document.getElementById(`pp_${i}`).value)||1,
+      arrival:parseInt(document.getElementById(`pa_${i}`).value)||0,
+      burst:parseInt(document.getElementById(`pb_${i}`).value)||1,
+      remaining:parseInt(document.getElementById(`pb_${i}`).value)||1,
+      ct:0, colorIdx:i
+    });
+  }
+
+  let time=0, done=0, segments=[];
+  let remaining=procs.map(p=>({...p}));
+
+  if(mode==='nonpreemptive'){
+    let finished=new Array(n).fill(false);
+    while(done<n){
+      // get arrived & unfinished
+      let candidates=remaining.filter((_,i)=>!finished[i] && procs[i].arrival<=time);
+      if(candidates.length===0){
+        // idle
+        let nextArr=Math.min(...remaining.filter((_,i)=>!finished[i]).map(p=>p.arrival));
+        segments.push({name:'IDLE',start:time,end:nextArr,colorIdx:7});
+        time=nextArr;
+        continue;
+      }
+      // pick highest priority (lowest number), tie-break by arrival
+      candidates.sort((a,b)=>a.priority-b.priority||a.arrival-b.arrival);
+      let cur=candidates[0];
+      let idx=procs.findIndex(p=>p.name===cur.name);
+      segments.push({name:cur.name,start:time,end:time+cur.burst,colorIdx:idx});
+      time+=cur.burst;
+      procs[idx].ct=time;
+      finished[idx]=true;
+      remaining[idx].remaining=0;
+      done++;
+    }
+  } else {
+    // Preemptive
+    let rem=procs.map(p=>p.burst);
+    let finished=new Array(n).fill(false);
+    while(done<n){
+      let candidates=procs.map((p,i)=>({...p,idx:i})).filter((p,i)=>!finished[p.idx]&&p.arrival<=time&&rem[p.idx]>0);
+      if(candidates.length===0){
+        let nextArr=Math.min(...procs.filter((_,i)=>!finished[i]).map(p=>p.arrival));
+        segments.push({name:'IDLE',start:time,end:nextArr,colorIdx:7});
+        time=nextArr;continue;
+      }
+      candidates.sort((a,b)=>a.priority-b.priority||a.arrival-b.arrival);
+      let cur=candidates[0];
+      // run until next event
+      let nextEvents=[...procs.map(p=>p.arrival).filter(a=>a>time)];
+      nextEvents.push(time+rem[cur.idx]);
+      let nextEvent=Math.min(...nextEvents);
+      let runTime=nextEvent-time;
+      if(segments.length>0 && segments[segments.length-1].name===cur.name && segments[segments.length-1].end===time){
+        segments[segments.length-1].end=nextEvent;
+      } else {
+        segments.push({name:cur.name,start:time,end:nextEvent,colorIdx:cur.idx});
+      }
+      rem[cur.idx]-=runTime;
+      time=nextEvent;
+      if(rem[cur.idx]<=0){procs[cur.idx].ct=time;finished[cur.idx]=true;done++;}
+    }
+  }
+
+  // Build results
+  let rows='',tatSum=0,wtSum=0;
+  procs.forEach((p,i)=>{
+    const tat=p.ct-p.arrival;
+    const wt=tat-p.burst;
+    tatSum+=tat;wtSum+=wt;
+    rows+=`<tr><td>${p.name}</td><td>${p.priority}</td><td>${p.arrival}</td><td>${p.burst}</td><td class="hi">${p.ct}</td><td>${tat}</td><td>${wt}</td></tr>`;
+  });
+  rows+=`<tr class="avg-row"><td colspan="5">AVERAGES</td><td>${(tatSum/n).toFixed(2)}</td><td>${(wtSum/n).toFixed(2)}</td></tr>`;
+
+  const gantt=renderGantt(segments,time);
+
+  const res=document.getElementById('p_result');
+  res.className='result-box visible';
+  res.innerHTML=`
+    ${gantt}
+    <div style="overflow-x:auto;margin-top:14px">
+    <table class="result-table">
+      <thead><tr><th>Process</th><th>Priority</th><th>Arrival</th><th>Burst</th><th>Completion</th><th>TAT</th><th>WT</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>
+    <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
+      <span class="pill gold">Avg TAT: ${(tatSum/n).toFixed(2)}</span>
+      <span class="pill green">Avg WT: ${(wtSum/n).toFixed(2)}</span>
+      <span class="pill blue">Mode: ${mode==='preemptive'?'Preemptive':'Non-Preemptive'}</span>
+    </div>`;
+}
+
+/* ── ROUND ROBIN ─────────────────────────────────── */
+function calcRR(){
+  const n=parseInt(document.getElementById('rr_count').value);
+  const q=parseInt(document.getElementById('rr_quantum').value)||1;
+
+  let procs=[];
+  for(let i=0;i<n;i++){
+    procs.push({
+      name:`P${i+1}`,
+      arrival:parseInt(document.getElementById(`ra_${i}`).value)||0,
+      burst:parseInt(document.getElementById(`rb_${i}`).value)||1,
+      remaining:parseInt(document.getElementById(`rb_${i}`).value)||1,
+      ct:0, colorIdx:i
+    });
+  }
+
+  let time=0, done=0, segments=[];
+  let rem=procs.map(p=>p.burst);
+  let finished=new Array(n).fill(false);
+  let queue=[];
+  let inQueue=new Array(n).fill(false);
+
+  // Add processes that arrive at t=0
+  procs.forEach((p,i)=>{if(p.arrival<=time && !inQueue[i]){queue.push(i);inQueue[i]=true;}});
+
+  while(done<n){
+    if(queue.length===0){
+      // idle
+      let nextArr=Math.min(...procs.filter((_,i)=>!finished[i]).map(p=>p.arrival));
+      segments.push({name:'IDLE',start:time,end:nextArr,colorIdx:7});
+      time=nextArr;
+      procs.forEach((p,i)=>{if(p.arrival<=time && !inQueue[i] && !finished[i]){queue.push(i);inQueue[i]=true;}});
+      continue;
+    }
+
+    let idx=queue.shift();
+    let runTime=Math.min(rem[idx],q);
+    let start=time;
+    time+=runTime;
+    rem[idx]-=runTime;
+    segments.push({name:procs[idx].name,start,end:time,colorIdx:idx});
+
+    // Add newly arrived during this slice
+    let newArrivals=[];
+    procs.forEach((p,i)=>{if(p.arrival>start && p.arrival<=time && !inQueue[i] && !finished[i]){newArrivals.push(i);inQueue[i]=true;}});
+    newArrivals.sort((a,b)=>procs[a].arrival-procs[b].arrival);
+    newArrivals.forEach(i=>queue.push(i));
+
+    if(rem[idx]<=0){
+      finished[idx]=true;
+      procs[idx].ct=time;
+      done++;
+    } else {
+      queue.push(idx);
+    }
+  }
+
+  let rows='',tatSum=0,wtSum=0;
+  procs.forEach(p=>{
+    const tat=p.ct-p.arrival;
+    const wt=tat-p.burst;
+    tatSum+=tat;wtSum+=wt;
+    rows+=`<tr><td>${p.name}</td><td>${p.arrival}</td><td>${p.burst}</td><td class="hi">${p.ct}</td><td>${tat}</td><td>${wt}</td></tr>`;
+  });
+  rows+=`<tr class="avg-row"><td colspan="4">AVERAGES</td><td>${(tatSum/n).toFixed(2)}</td><td>${(wtSum/n).toFixed(2)}</td></tr>`;
+
+  const gantt=renderGantt(segments,time);
+  const res=document.getElementById('rr_result');
+  res.className='result-box visible';
+  res.innerHTML=`
+    ${gantt}
+    <div style="overflow-x:auto;margin-top:14px">
+    <table class="result-table">
+      <thead><tr><th>Process</th><th>Arrival</th><th>Burst</th><th>Completion</th><th>TAT</th><th>WT</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>
+    <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
+      <span class="pill gold">Avg TAT: ${(tatSum/n).toFixed(2)}</span>
+      <span class="pill green">Avg WT: ${(wtSum/n).toFixed(2)}</span>
+      <span class="pill blue">Quantum: ${q}</span>
+    </div>`;
+}
+
+/* ── QUIZ ──────────────────────────────────────── */
+const QD=[
+  {q:"In priority scheduling, which process gets the CPU first?",opts:["The one that arrived first","The one with the lowest priority number","The one with the shortest burst","The one with the highest burst time"],ans:1,ex:"Lower priority NUMBER = Higher importance. Priority 1 beats Priority 2."},
+  {q:"P1 (Priority 1) is running. P2 (Priority 2) arrives. In PREEMPTIVE priority, what happens?",opts:["P2 immediately takes the CPU","P1 continues until done","P2 waits in the queue","The CPU becomes idle"],ans:1,ex:"In preemptive scheduling, P1 (priority 1) is higher than P2 (priority 2). P1 already has higher priority, so it keeps running."},
+  {q:"P1 (Priority 2) is running. P3 (Priority 1) arrives. In PREEMPTIVE priority, what happens?",opts:["P1 continues until done","P3 immediately preempts P1","P1 finishes its current quantum","Nothing changes"],ans:1,ex:"P3 has priority 1 which is HIGHER than P1's priority 2. In preemptive mode, P3 kicks P1 out immediately."},
+  {q:"Turnaround Time formula is:",opts:["Burst − Arrival","Completion − Arrival","Completion − Burst","Waiting + Arrival"],ans:1,ex:"TAT = Completion Time − Arrival Time. Always."},
+  {q:"Waiting Time formula is:",opts:["TAT − Burst","Burst − TAT","CT − Arrival","TAT + Burst"],ans:0,ex:"WT = Turnaround Time − Burst Time. Or equivalently, WT = CT − Arrival − Burst."},
+  {q:"In Round Robin, what happens when a process finishes before the quantum expires?",opts:["It waits until the quantum is done","It gets extra CPU time","It releases the CPU immediately","It goes to the back of the queue and waits"],ans:2,ex:"If remaining burst < quantum, the process runs its remaining time and releases the CPU early. It doesn't wait for the full quantum."},
+  {q:"What is the main advantage of Round Robin over Priority Scheduling?",opts:["It is faster","No starvation — every process gets a turn","It needs less memory","Priority is more accurate"],ans:1,ex:"Round Robin is starvation-free. Every process cycles through the queue equally. Priority scheduling can starve low-priority jobs."},
+  {q:"If the time quantum in Round Robin is very LARGE, it degenerates into:",opts:["Shortest Job Next","Priority Scheduling","FCFS (First Come First Served)","Earliest Deadline First"],ans:2,ex:"If the quantum is larger than most burst times, every process finishes before being preempted — exactly like FCFS."},
+  {q:"Process: Arrival=0, Burst=10, Completion=25. What is the Waiting Time?",opts:["25","15","10","35"],ans:1,ex:"TAT = 25 − 0 = 25. WT = TAT − Burst = 25 − 10 = 15."},
+  {q:"In Non-Preemptive Priority, P1(pri=2) is running. P2(pri=1) arrives. What happens?",opts:["P2 immediately preempts P1","P1 continues until it finishes","The CPU becomes idle","P2 runs in parallel with P1"],ans:1,ex:"NON-preemptive means once started, it runs to COMPLETION. P2 has to wait in the ready queue until P1 finishes, even though P2 has higher priority."},
+];
+
+let QA=[];
+function buildQuiz(){
+  QA=new Array(QD.length).fill(null);
+  document.getElementById('quiz_score').className='quiz-score';
+  document.getElementById('quiz-container').innerHTML=QD.map((q,i)=>`
+    <div class="quiz-q-card" id="qq${i}">
+      <div class="quiz-q-num">QUESTION ${i+1} OF ${QD.length}</div>
+      <div class="quiz-q-text">${q.q}</div>
+      <div class="quiz-opts">${q.opts.map((o,j)=>`<button class="quiz-opt" onclick="answerQ(${i},${j})">${o}</button>`).join('')}</div>
+      <div class="quiz-feedback" id="qfb${i}"></div>
+    </div>`).join('');
+}
+
+function answerQ(qi,oi){
+  if(QA[qi]!==null)return;
+  QA[qi]=oi;
+  const q=QD[qi];
+  document.getElementById(`qq${qi}`).querySelectorAll('.quiz-opt').forEach((b,j)=>{
+    b.disabled=true;
+    if(j===q.ans)b.classList.add('correct');
+    else if(j===oi)b.classList.add('wrong');
+  });
+  const fb=document.getElementById(`qfb${qi}`);
+  const ok=oi===q.ans;
+  fb.className=`quiz-feedback show ${ok?'ok':'bad'}`;
+  fb.textContent=(ok?'✓ Correct! ':'✗ Incorrect. ')+q.ex;
+  if(QA.every(a=>a!==null)){
+    const sc=QA.filter((a,i)=>a===QD[i].ans).length;
+    const el=document.getElementById('quiz_score');
+    el.className='quiz-score show';
+    const num=document.getElementById('quiz_score_num');
+    num.textContent=`${sc}/${QD.length}`;
+    num.style.color=sc>=8?'var(--green)':sc>=5?'var(--gold)':'var(--red)';
+    el.scrollIntoView({behavior:'smooth',block:'nearest'});
+  }
+}
+
+function resetQuiz(){buildQuiz();window.scrollTo({top:0,behavior:'smooth'})}
+buildQuiz();
+</script>
+</body>
+</html>
